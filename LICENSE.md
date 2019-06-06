@@ -1,4 +1,4 @@
-BSD 3-Clause License
+## BSD 3-Clause License
 
 Copyright 2019 Daniel Pimley.
 
