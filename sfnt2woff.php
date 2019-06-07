@@ -27,6 +27,9 @@
         private $woff_privlength     = 0;
 
         public function import($sfnt) {
+            if (self::SIZEOF_SFNT_OFFSET > strlen($sfnt))
+                throw new Exception("File is invalid.");
+
             $sfnt_offset = unpack("H8flavor/nnumTables", $sfnt);
             $sfnt_tables = array();
             $table_count = $sfnt_offset["numTables"];
@@ -35,7 +38,7 @@
                 $offset = self::SIZEOF_SFNT_OFFSET + ($i * self::SIZEOF_SFNT_ENTRY);
 
                 if (($offset + self::SIZEOF_SFNT_ENTRY) > strlen($sfnt))
-                    throw new Exception("SFNT file ended unexpectedly.", 1);
+                    throw new Exception("File ended unexpectedly.");
 
                 $sfnt_tables[$i] = unpack("a4tag/H8checkSum/H8offset/H8length", $sfnt, $offset);
                 $sfnt_tables[$i]["offset"] = hexdec($sfnt_tables[$i]["offset"]);
@@ -48,6 +51,7 @@
 
             $this->sfnt_offset = $sfnt_offset;
             $this->sfnt_tables = $sfnt_tables;
+            $this->woff_tables = array();
         }
 
         public function export() {
@@ -143,8 +147,11 @@
                 $comp_checksum = $table["calcChecksum"];
                 $orig_checksum = $table["origChecksum"];
 
-                if ($table["tag"] != "head" and $comp_checksum !== $orig_checksum)
-                    throw new Exception("Checksum mismatch in table data.", 2);
+                if ($table["tag"] == "head")
+                    continue;
+
+                if ($comp_checksum !== $orig_checksum)
+                    throw new Exception("Checksum mismatch in table data.");
             }
         }
 
