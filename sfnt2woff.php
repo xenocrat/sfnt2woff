@@ -35,6 +35,7 @@
 
             $sfnt_offset = unpack("H8flavor/nnumTables", $sfnt);
             $sfnt_tables = array();
+            $woff_tables = array();
             $table_count = $sfnt_offset["numTables"];
 
             for ($i = 0; $i < $table_count; $i++) {
@@ -54,7 +55,7 @@
 
             $this->sfnt_offset = $sfnt_offset;
             $this->sfnt_tables = $sfnt_tables;
-            $this->woff_tables = array();
+            $this->woff_tables = $woff_tables;
         }
 
         public function export() {
@@ -64,6 +65,9 @@
             $table_count = count($sfnt_tables);
             $woff_offset = self::SIZEOF_WOFF_HEADER + ($table_count * self::SIZEOF_WOFF_ENTRY);
             $sfnt_offset = self::SIZEOF_SFNT_OFFSET + ($table_count * self::SIZEOF_SFNT_ENTRY);
+
+            if (empty($sfnt_tables))
+                throw new Exception("Nothing to export.");
 
             for ($i = 0; $i < $table_count; $i++) {
                 $sfnt_orig = $sfnt_tables[$i]["tableData"];
