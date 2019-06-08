@@ -1,30 +1,33 @@
 <?php
     class sfnt2woff {
-        const VERSION_MAJOR          = 0;
-        const VERSION_MINOR          = 1;
+        const SFNT2WOFF_VERSION_MAJOR = 0;
+        const SFNT2WOFF_VERSION_MINOR = 1;
 
-        const SIZEOF_SFNT_OFFSET     = 12;
-        const SIZEOF_SFNT_ENTRY      = 16;
-        const SIZEOF_WOFF_HEADER     = 44;
-        const SIZEOF_WOFF_ENTRY      = 20;
+        const SIZEOF_SFNT_OFFSET      = 12;
+        const SIZEOF_SFNT_ENTRY       = 16;
+        const SIZEOF_WOFF_HEADER      = 44;
+        const SIZEOF_WOFF_ENTRY       = 20;
 
-        const WOFF_SIGNATURE         = 0x774F4646;
+        const WOFF_SIGNATURE          = 0x774F4646;
+        const WOFF_RESERVED           = 0;
 
-        public $strict               = true;
+        public $strict                = true;
+        public $version_major         = self::SFNT2WOFF_VERSION_MAJOR;
+        public $version_minor         = self::SFNT2WOFF_VERSION_MINOR;
 
-        private $sfnt_offset         = array();
-        private $sfnt_tables         = array();
-        private $woff_tables         = array();
+        private $sfnt_offset          = array();
+        private $sfnt_tables          = array();
+        private $woff_tables          = array();
 
-        private $woff_flavor         = 0;
-        private $woff_length         = 0;
-        private $woff_numtables      = 0;
-        private $woff_totalsfntsize  = 0;
-        private $woff_metaoffset     = 0;
-        private $woff_metalength     = 0;
-        private $woff_metaoriglength = 0;
-        private $woff_privoffset     = 0;
-        private $woff_privlength     = 0;
+        private $woff_flavor          = 0;
+        private $woff_length          = 0;
+        private $woff_numtables       = 0;
+        private $woff_totalsfntsize   = 0;
+        private $woff_metaoffset      = 0;
+        private $woff_metalength      = 0;
+        private $woff_metaoriglength  = 0;
+        private $woff_privoffset      = 0;
+        private $woff_privlength      = 0;
 
         public function import($sfnt) {
             if (self::SIZEOF_SFNT_OFFSET > strlen($sfnt))
@@ -178,10 +181,10 @@
                 $this->woff_flavor,
                 $this->woff_length,
                 $this->woff_numtables,
-                0,
+                self::WOFF_RESERVED,
                 $this->woff_totalsfntsize,
-                self::VERSION_MAJOR,
-                self::VERSION_MINOR,
+                (int) $this->version_major,
+                (int) $this->version_minor,
                 $this->woff_metaoffset,
                 $this->woff_metalength,
                 $this->woff_metaoriglength,
