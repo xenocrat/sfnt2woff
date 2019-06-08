@@ -98,10 +98,6 @@
             $this->woff_length         = $woff_offset;
             $this->woff_numtables      = $table_count;
             $this->woff_totalsfntsize  = $sfnt_offset;
-            $this->woff_metaoffset     = 0;
-            $this->woff_metaoriglength = 0;
-            $this->woff_privoffset     = 0;
-            $this->woff_privlength     = 0;
 
             $this->append_woff_header($woff_export);
             $this->append_woff_directory($woff_export);
