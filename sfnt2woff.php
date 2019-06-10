@@ -125,7 +125,12 @@
         }
 
         private function compress($data) {
-            return gzcompress($data, 6, ZLIB_ENCODING_DEFLATE);
+            $comp = gzcompress($data, 6, ZLIB_ENCODING_DEFLATE);
+
+            if ($data === false)
+                throw new Exception("ZLIB compression failed.");
+
+            return $comp;
         }
 
         private function pad_table($data) {
