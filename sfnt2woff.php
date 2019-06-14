@@ -30,23 +30,30 @@
         private $woff_privlength      = 0;
 
         public function import($sfnt) {
-            if (self::SIZEOF_SFNT_OFFSET > strlen($sfnt))
-                throw new Exception("File is invalid.");
-
-            $sfnt_offset = unpack("H8flavor/nnumTables", $sfnt);
+            $sfnt_length = strlen($sfnt);
             $sfnt_tables = array();
             $woff_tables = array();
+
+            if (self::SIZEOF_SFNT_OFFSET > $sfnt_length)
+                throw new Exception("File does not contain SFNT data.");
+
+            $sfnt_offset = unpack("H8flavor/nnumTables", $sfnt);
             $table_count = $sfnt_offset["numTables"];
 
             for ($i = 0; $i < $table_count; $i++) {
                 $offset = self::SIZEOF_SFNT_OFFSET + ($i * self::SIZEOF_SFNT_ENTRY);
+                $target = $offset + self::SIZEOF_SFNT_ENTRY;
 
-                if (($offset + self::SIZEOF_SFNT_ENTRY) > strlen($sfnt))
+                if ($target > $sfnt_length)
                     throw new Exception("File ended unexpectedly.");
 
                 $sfnt_tables[$i] = unpack("a4tag/H8checkSum/H8offset/H8length", $sfnt, $offset);
                 $sfnt_tables[$i]["offset"] = hexdec($sfnt_tables[$i]["offset"]);
                 $sfnt_tables[$i]["length"] = hexdec($sfnt_tables[$i]["length"]);
+                $target = $sfnt_tables[$i]["offset"] + $sfnt_tables[$i]["length"];
+
+                if ($target > $sfnt_length)
+                    throw new Exception("File ended unexpectedly.");
 
                 $sfnt_tables[$i]["tableData"] = substr($sfnt,
                                                        $sfnt_tables[$i]["offset"],
@@ -67,7 +74,7 @@
             $sfnt_offset = self::SIZEOF_SFNT_OFFSET + ($table_count * self::SIZEOF_SFNT_ENTRY);
 
             if (empty($sfnt_tables))
-                throw new Exception("Nothing to export.");
+                throw new Exception("No SFNT data to export.");
 
             for ($i = 0; $i < $table_count; $i++) {
                 $sfnt_orig = $sfnt_tables[$i]["tableData"];
