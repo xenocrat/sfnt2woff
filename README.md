@@ -1,6 +1,11 @@
 ## What is this?
 
-sfnt2woff is a PHP 5.4+ class for converting OTF/TTF files to WOFF.
+sfnt2woff is a PHP class for converting OTF/TTF files to WOFF.
+
+## Requirements
+
+* PHP 5.4+
+* ZLIB extension
 
 ## Usage
 
@@ -23,7 +28,7 @@ Disable the integrity test:
 Set the WOFF file version:
 
     $sfnt2woff->version_major = 1;
-    $sfnt2woff->version_minor = 0;
+    $sfnt2woff->version_minor = 1;
 
 Export the WOFF font file:
 
