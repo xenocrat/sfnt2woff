@@ -30,6 +30,14 @@ Set the WOFF file version:
     $sfnt2woff->version_major = 1;
     $sfnt2woff->version_minor = 1;
 
+Set the extended metadata block:
+
+    $sfnt2woff->set_meta($simpleXMLElement);
+
+Set the private data block:
+
+    $sfnt2woff->set_priv($string);
+
 Export the WOFF font file:
 
     $woff = $sfnt2woff->export();
