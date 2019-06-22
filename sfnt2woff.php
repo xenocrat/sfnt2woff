@@ -18,6 +18,8 @@
         private $sfnt_offset          = array();
         private $sfnt_tables          = array();
         private $woff_tables          = array();
+        private $woff_meta            = array();
+        private $woff_priv            = array();
 
         private $woff_flavor          = 0;
         private $woff_length          = 0;
@@ -67,6 +69,7 @@
 
         public function export() {
             $woff_export = "";
+            $woff_flavor = $this->sfnt_offset["flavor"];
             $woff_tables = array();
             $sfnt_tables = $this->sort_tables_by_offset($this->sfnt_tables);
             $table_count = count($sfnt_tables);
@@ -90,45 +93,104 @@
                     "origLength"   => strlen($sfnt_orig),
                     "calcChecksum" => $this->calc_checksum($sfnt_orig),
                     "origChecksum" => $sfnt_tables[$i]["checkSum"],
-                    "tableData"    => $this->pad_table($sfnt_comp)
+                    "tableData"    => $this->pad_data($sfnt_comp)
                 );
 
                 $woff_offset = $woff_offset + strlen($woff_tables[$i]["tableData"]);
-                $sfnt_offset = $sfnt_offset + strlen($this->pad_table($sfnt_orig));
+                $sfnt_offset = $sfnt_offset + strlen($this->pad_data($sfnt_orig));
             }
 
             if ($this->strict)
                 $this->test_integrity($woff_tables);
 
+            $woff_metaoffset     = 0;
+            $woff_metalength     = 0;
+            $woff_metaoriglength = 0;
+            $woff_privoffset     = 0;
+            $woff_privlength     = 0;
+
+            if (!empty($this->woff_meta)) {
+                $woff_metaoffset = $this->pad_offset($woff_offset);
+                $woff_metalength = strlen($this->woff_meta["compData"]);
+                $woff_metaoriglength = strlen($this->woff_meta["origData"]);
+
+                $woff_offset = $woff_metaoffset + $woff_metalength;
+            }
+
+            if (!empty($this->woff_priv)) {
+                $woff_privoffset = $this->pad_offset($woff_offset);
+                $woff_privlength = strlen($this->woff_priv["privData"]);
+
+                $woff_offset = $woff_privoffset + $woff_privlength;
+            }
+
             $this->woff_tables         = $woff_tables;
-            $this->woff_flavor         = $this->sfnt_offset["flavor"];
+            $this->woff_flavor         = $woff_flavor;
             $this->woff_length         = $woff_offset;
             $this->woff_numtables      = $table_count;
             $this->woff_totalsfntsize  = $sfnt_offset;
+            $this->woff_metaoffset     = $woff_metaoffset;
+            $this->woff_metalength     = $woff_metalength;
+            $this->woff_metaoriglength = $woff_metaoriglength;
+            $this->woff_privoffset     = $woff_privoffset;
+            $this->woff_privlength     = $woff_privlength;
 
             $this->append_woff_header($woff_export);
             $this->append_woff_directory($woff_export);
             $this->append_woff_tables($woff_export);
+            $this->append_woff_meta($woff_export);
+            $this->append_woff_priv($woff_export);
 
             return $woff_export;
         }
 
-        public function get_sfnt_metadata() {
+        public function get_sfnt_entries() {
             $tables = $this->sfnt_tables;
 
             foreach ($tables as &$table)
                 unset($table["tableData"]);
 
-            return $tables;
+            return empty($tables) ? false : $tables ;
         }
 
-        public function get_woff_metadata() {
+        public function get_woff_entries() {
             $tables = $this->woff_tables;
 
             foreach ($tables as &$table)
                 unset($table["tableData"]);
 
-            return $tables;
+            return empty($tables) ? false : $tables ;
+        }
+
+        public function get_woff_meta() {
+            return empty($this->woff_meta) ? false : $this->woff_meta["origData"] ;
+        }
+
+        public function set_woff_meta($object) {
+            if (!$object instanceof SimpleXMLElement)
+                throw new Exception("Extended metadata must be a SimpleXMLElement.");
+
+            $xml = $object->asXML();
+
+            if ($xml === false)
+                throw new Exception("Extended metadata object failed to return XML.");
+
+            $this->woff_meta["origData"] = $xml;
+            $this->woff_meta["compData"] = $this->compress($xml);
+        }
+
+        public function get_woff_priv() {
+            return empty($this->woff_priv) ? false : $this->woff_priv["privData"] ;
+        }
+
+        public function set_woff_priv($string) {
+            if (!is_string($string))
+                throw new Exception("Private data block must be a string.");
+
+            if (strlen($string) === 0)
+                throw new Exception("Private data block cannot be zero length.");
+
+            $this->woff_priv["privData"] = $string;
         }
 
         private function compress($data) {
@@ -140,12 +202,16 @@
             return $comp;
         }
 
-        private function pad_table($data) {
+        private function pad_data($data) {
             return str_pad($data, (ceil(strlen($data) / 4) * 4), "\0", STR_PAD_RIGHT);
         }
 
+        private function pad_offset($offset) {
+            return ceil($offset / 4) * 4;
+        }
+
         private function calc_checksum($data) {
-            $data = $this->pad_table($data);
+            $data = $this->pad_data($data);
             $size = ceil(strlen($data) / 4);
             $sum = 0;
 
@@ -223,5 +289,21 @@
 
             foreach ($woff_tables as $woff_table)
                 $data.= $woff_table["tableData"];
+        }
+
+        private function append_woff_meta(&$data) {
+            if (empty($this->woff_meta))
+                return;
+
+            $data = $this->pad_data($data);
+            $data.= $this->woff_meta["compData"];
+        }
+
+        private function append_woff_priv(&$data) {
+            if (empty($this->woff_priv))
+                return;
+
+            $data = $this->pad_data($data);
+            $data.= $this->woff_priv["privData"];
         }
     }
