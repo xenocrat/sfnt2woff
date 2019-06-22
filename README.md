@@ -32,10 +32,12 @@ Set the WOFF file version:
 
 Set the extended metadata block:
 
-    $sfnt2woff->set_meta($simpleXMLElement);
+    $xml = simplexml_load_file("example.xml");
+    $sfnt2woff->set_meta($xml);
 
 Set the private data block:
 
+    $string = sha1("example");
     $sfnt2woff->set_priv($string);
 
 Export the WOFF font file:
