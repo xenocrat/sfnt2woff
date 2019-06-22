@@ -1,7 +1,7 @@
 <?php
     class sfnt2woff {
         const SFNT2WOFF_VERSION_MAJOR = 1;
-        const SFNT2WOFF_VERSION_MINOR = 1;
+        const SFNT2WOFF_VERSION_MINOR = 2;
 
         const SIZEOF_SFNT_OFFSET      = 12;
         const SIZEOF_SFNT_ENTRY       = 16;
