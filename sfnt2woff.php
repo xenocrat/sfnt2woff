@@ -217,10 +217,21 @@
 
             for ($i = 0; $i < $size; $i++) {
                 $array = unpack("Nunit", $data, $i * 4);
-                $sum = $sum + $array["unit"];
+                $sum = $this->uint32_bitwise_add($sum, $array["unit"]);
             }
 
             return str_pad(dechex($sum), 8, "0", STR_PAD_LEFT);
+        }
+
+        private function uint32_bitwise_add($a, $b) {  
+            while ($b != 0) {
+                $carry = ($a & $b);
+                $a = $a ^ $b; 
+                $b = $carry << 1;
+            }
+
+            # Simulate uint32 overflow.
+            return ($a & 0xffffffff);
         }
 
         private function test_integrity($tables) {
