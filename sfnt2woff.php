@@ -218,7 +218,12 @@
             for ($i = 0; $i < $size; $i++) {
                 $array = unpack("H8unit", $data, $i * 4);
                 $unit = hexdec($array["unit"]);
+
+                # Simulate uint32 overflow.
                 $sum = (($sum + $unit) & 0xffffffff);
+
+                # Make uint32 result a float.
+                $sum = hexdec(dechex($sum));
             }
 
             return str_pad(dechex($sum), 8, "0", STR_PAD_LEFT);
