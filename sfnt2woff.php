@@ -11,6 +11,7 @@
         const WOFF_SIGNATURE          = 0x774F4646;
         const WOFF_RESERVED           = 0;
 
+        public $compression_level     = 6;
         public $strict                = true;
         public $version_major         = self::SFNT2WOFF_VERSION_MAJOR;
         public $version_minor         = self::SFNT2WOFF_VERSION_MINOR;
@@ -194,7 +195,12 @@
         }
 
         private function compress($data) {
-            $comp = gzcompress($data, 6, ZLIB_ENCODING_DEFLATE);
+            $level = (int) $this->compression_level;
+
+            if ($level < 1 or $level > 9)
+                $level = 6;
+
+            $comp = gzcompress($data, $level, ZLIB_ENCODING_DEFLATE);
 
             if ($data === false)
                 throw new Exception("ZLIB compression failed.");
