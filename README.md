@@ -25,6 +25,10 @@ Disable the integrity test:
 
     $sfnt2woff->strict = false;
 
+Set the compression level (1-9):
+
+    $sfnt2woff->compression_level = 9;
+
 Set the WOFF file version:
 
     $sfnt2woff->version_major = 1;
