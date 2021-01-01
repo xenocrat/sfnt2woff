@@ -1,7 +1,9 @@
 <?php
+    namespace xenocrat;
+
     class sfnt2woff {
-        const SFNT2WOFF_VERSION_MAJOR = 1;
-        const SFNT2WOFF_VERSION_MINOR = 4;
+        const SFNT2WOFF_VERSION_MAJOR = 2;
+        const SFNT2WOFF_VERSION_MINOR = 0;
 
         const SIZEOF_SFNT_OFFSET      = 12;
         const SIZEOF_SFNT_ENTRY       = 16;
@@ -38,7 +40,7 @@
             $woff_tables = array();
 
             if (self::SIZEOF_SFNT_OFFSET > $sfnt_length)
-                throw new Exception("File does not contain SFNT data.");
+                throw new \Exception("File does not contain SFNT data.");
 
             $sfnt_offset = unpack("H8flavor/nnumTables", $sfnt);
             $table_count = $sfnt_offset["numTables"];
@@ -48,7 +50,7 @@
                 $target = $offset + self::SIZEOF_SFNT_ENTRY;
 
                 if ($target > $sfnt_length)
-                    throw new Exception("File ended unexpectedly.");
+                    throw new \Exception("File ended unexpectedly.");
 
                 $sfnt_tables[$i] = unpack("a4tag/H8checkSum/H8offset/H8length", $sfnt, $offset);
                 $sfnt_tables[$i]["offset"] = hexdec($sfnt_tables[$i]["offset"]);
@@ -56,7 +58,7 @@
                 $target = $sfnt_tables[$i]["offset"] + $sfnt_tables[$i]["length"];
 
                 if ($target > $sfnt_length)
-                    throw new Exception("File ended unexpectedly.");
+                    throw new \Exception("File ended unexpectedly.");
 
                 $sfnt_tables[$i]["tableData"] = substr($sfnt,
                                                        $sfnt_tables[$i]["offset"],
@@ -78,7 +80,7 @@
             $sfnt_offset = self::SIZEOF_SFNT_OFFSET + ($table_count * self::SIZEOF_SFNT_ENTRY);
 
             if (empty($sfnt_tables))
-                throw new Exception("No SFNT data to export.");
+                throw new \Exception("No SFNT data to export.");
 
             for ($i = 0; $i < $table_count; $i++) {
                 $sfnt_orig = $sfnt_tables[$i]["tableData"];
@@ -169,12 +171,12 @@
 
         public function set_woff_meta($object) {
             if (!$object instanceof SimpleXMLElement)
-                throw new Exception("Extended metadata must be a SimpleXMLElement.");
+                throw new \Exception("Extended metadata must be a SimpleXMLElement.");
 
             $xml = $object->asXML();
 
             if ($xml === false)
-                throw new Exception("Extended metadata object failed to return XML.");
+                throw new \Exception("Extended metadata object failed to return XML.");
 
             $this->woff_meta["origData"] = $xml;
             $this->woff_meta["compData"] = $this->compress($xml);
@@ -186,10 +188,10 @@
 
         public function set_woff_priv($string) {
             if (!is_string($string))
-                throw new Exception("Private data block must be a string.");
+                throw new \Exception("Private data block must be a string.");
 
             if (strlen($string) === 0)
-                throw new Exception("Private data block cannot be zero length.");
+                throw new \Exception("Private data block cannot be zero length.");
 
             $this->woff_priv["privData"] = $string;
         }
@@ -203,7 +205,7 @@
             $comp = gzcompress($data, $level, ZLIB_ENCODING_DEFLATE);
 
             if ($data === false)
-                throw new Exception("ZLIB compression failed.");
+                throw new \Exception("ZLIB compression failed.");
 
             return $comp;
         }
@@ -244,7 +246,7 @@
                     continue;
 
                 if ($comp_checksum !== $orig_checksum)
-                    throw new Exception("Checksum mismatch in table data.");
+                    throw new \Exception("Checksum mismatch in table data.");
             }
         }
 
