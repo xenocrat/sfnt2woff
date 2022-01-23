@@ -4,7 +4,7 @@ sfnt2woff is a PHP class for converting OTF/TTF files to WOFF.
 
 ## Requirements
 
-* PHP 5.4+
+* PHP 8.0+
 * ZLIB extension
 
 ## Usage
