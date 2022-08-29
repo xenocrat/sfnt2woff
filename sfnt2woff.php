@@ -3,7 +3,7 @@
 
     class sfnt2woff {
         const SFNT2WOFF_VERSION_MAJOR = 3;
-        const SFNT2WOFF_VERSION_MINOR = 0;
+        const SFNT2WOFF_VERSION_MINOR = 1;
 
         const SIZEOF_SFNT_OFFSET      = 12;
         const SIZEOF_SFNT_ENTRY       = 16;
