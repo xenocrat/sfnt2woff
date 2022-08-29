@@ -42,17 +42,26 @@
             if (self::SIZEOF_SFNT_OFFSET > $sfnt_length)
                 throw new \Exception("File does not contain SFNT data.");
 
-            $sfnt_offset = unpack("H8flavor/nnumTables", $sfnt);
+            $sfnt_offset = unpack(
+                "H8flavor/nnumTables",
+                $sfnt
+            );
             $table_count = $sfnt_offset["numTables"];
 
             for ($i = 0; $i < $table_count; $i++) {
-                $offset = self::SIZEOF_SFNT_OFFSET + ($i * self::SIZEOF_SFNT_ENTRY);
+                $offset = self::SIZEOF_SFNT_OFFSET + (
+                    $i * self::SIZEOF_SFNT_ENTRY
+                );
                 $target = $offset + self::SIZEOF_SFNT_ENTRY;
 
                 if ($target > $sfnt_length)
                     throw new \Exception("File ended unexpectedly.");
 
-                $sfnt_tables[$i] = unpack("a4tag/H8checkSum/H8offset/H8length", $sfnt, $offset);
+                $sfnt_tables[$i] = unpack(
+                    "a4tag/H8checkSum/H8offset/H8length",
+                    $sfnt,
+                    $offset
+                );
                 $sfnt_tables[$i]["offset"] = hexdec($sfnt_tables[$i]["offset"]);
                 $sfnt_tables[$i]["length"] = hexdec($sfnt_tables[$i]["length"]);
                 $target = $sfnt_tables[$i]["offset"] + $sfnt_tables[$i]["length"];
@@ -78,8 +87,12 @@
             $woff_tables = array();
             $sfnt_tables = $this->sort_tables_by_offset($this->sfnt_tables);
             $table_count = count($sfnt_tables);
-            $woff_offset = self::SIZEOF_WOFF_HEADER + ($table_count * self::SIZEOF_WOFF_ENTRY);
-            $sfnt_offset = self::SIZEOF_SFNT_OFFSET + ($table_count * self::SIZEOF_SFNT_ENTRY);
+            $woff_offset = self::SIZEOF_WOFF_HEADER + (
+                $table_count * self::SIZEOF_WOFF_ENTRY
+            );
+            $sfnt_offset = self::SIZEOF_SFNT_OFFSET + (
+                $table_count * self::SIZEOF_SFNT_ENTRY
+            );
 
             if (empty($sfnt_tables))
                 throw new \Exception("No SFNT data to export.");
@@ -155,7 +168,9 @@
             foreach ($tables as &$table)
                 unset($table["tableData"]);
 
-            return empty($tables) ? false : $tables ;
+            return empty($tables) ?
+                false :
+                $tables ;
         }
 
         public function get_woff_entries(): array|false {
@@ -164,11 +179,15 @@
             foreach ($tables as &$table)
                 unset($table["tableData"]);
 
-            return empty($tables) ? false : $tables ;
+            return empty($tables) ?
+                false :
+                $tables ;
         }
 
         public function get_woff_meta(): string|false {
-            return empty($this->woff_meta) ? false : $this->woff_meta["origData"] ;
+            return empty($this->woff_meta) ?
+                false :
+                $this->woff_meta["origData"] ;
         }
 
         public function set_woff_meta($object): void {
@@ -185,7 +204,9 @@
         }
 
         public function get_woff_priv(): string|false {
-            return empty($this->woff_priv) ? false : $this->woff_priv["privData"] ;
+            return empty($this->woff_priv) ?
+                false :
+                $this->woff_priv["privData"] ;
         }
 
         public function set_woff_priv($string): void {
@@ -199,6 +220,9 @@
         }
 
         private function compress($data): string {
+            if (!function_exists("gzcompress"))
+                throw new \Exception("ZLIB support required.");
+
             $level = (int) $this->compression_level;
 
             if ($level < 1 or $level > 9)
@@ -213,7 +237,12 @@
         }
 
         private function pad_data($data): string {
-            return str_pad($data, (ceil(strlen($data) / 4) * 4), "\0", STR_PAD_RIGHT);
+            return str_pad(
+                $data,
+                (ceil(strlen($data) / 4) * 4),
+                "\0",
+                STR_PAD_RIGHT
+            );
         }
 
         private function pad_offset($offset): int {
@@ -270,7 +299,8 @@
         }
 
         private function append_woff_header(&$data): void {
-            $data.= pack("N1H8N1n1n1N1n1n1N1N1N1N1N1",
+            $data.= pack(
+                "N1H8N1n1n1N1n1n1N1N1N1N1N1",
                 self::WOFF_SIGNATURE,
                 $this->woff_flavor,
                 $this->woff_length,
@@ -291,7 +321,8 @@
             $woff_tables = $this->sort_tables_by_tag($this->woff_tables);
 
             foreach ($woff_tables as $woff_table)
-                $data.= pack("a4N1N1N1H8",
+                $data.= pack(
+                    "a4N1N1N1H8",
                     $woff_table["tag"],
                     $woff_table["offset"],
                     $woff_table["compLength"],
