@@ -60,9 +60,11 @@
                 if ($target > $sfnt_length)
                     throw new \Exception("File ended unexpectedly.");
 
-                $sfnt_tables[$i]["tableData"] = substr($sfnt,
-                                                       $sfnt_tables[$i]["offset"],
-                                                       $sfnt_tables[$i]["length"]);
+                $sfnt_tables[$i]["tableData"] = substr(
+                    $sfnt,
+                    $sfnt_tables[$i]["offset"],
+                    $sfnt_tables[$i]["length"]
+                );
             }
 
             $this->sfnt_offset = $sfnt_offset;
