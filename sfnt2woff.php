@@ -3,7 +3,7 @@
 
     class sfnt2woff {
         const SFNT2WOFF_VERSION_MAJOR = 3;
-        const SFNT2WOFF_VERSION_MINOR = 1;
+        const SFNT2WOFF_VERSION_MINOR = 2;
 
         const SIZEOF_SFNT_OFFSET      = 12;
         const SIZEOF_SFNT_ENTRY       = 16;
@@ -255,14 +255,11 @@
             $sum = 0;
 
             for ($i = 0; $i < $size; $i++) {
-                $array = unpack("H8unit", $data, $i * 4);
-                $unit = hexdec($array["unit"]);
+                # Unpack a uint32 to be added to the sum.
+                $add = unpack("N", $data, $i * 4);
 
-                # Simulate uint32 overflow.
-                $sum = (($sum + $unit) & 0xffffffff);
-
-                # Make uint32 result a float.
-                $sum = hexdec(dechex($sum));
+                # Add to sum and simulate uint32 overflow.
+                $sum = (($sum + $add[1]) & 0xffffffff);
             }
 
             return str_pad(dechex($sum), 8, "0", STR_PAD_LEFT);
