@@ -3,7 +3,7 @@
 
     class sfnt2woff {
         const SFNT2WOFF_VERSION_MAJOR = 3;
-        const SFNT2WOFF_VERSION_MINOR = 2;
+        const SFNT2WOFF_VERSION_MINOR = 3;
 
         const SIZEOF_SFNT_OFFSET      = 12;
         const SIZEOF_SFNT_ENTRY       = 16;
@@ -35,6 +35,9 @@
         private $woff_privlength      = 0;
 
         public function import($sfnt): void {
+            if (!is_string($sfnt))
+                throw new \Exception("File must be supplied as a string.");
+
             $sfnt_length = strlen($sfnt);
             $sfnt_tables = array();
             $woff_tables = array();
