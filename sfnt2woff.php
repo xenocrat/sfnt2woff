@@ -3,7 +3,7 @@
 
     class sfnt2woff {
         const SFNT2WOFF_VERSION_MAJOR = 3;
-        const SFNT2WOFF_VERSION_MINOR = 3;
+        const SFNT2WOFF_VERSION_MINOR = 4;
 
         const SIZEOF_SFNT_OFFSET      = 12;
         const SIZEOF_SFNT_ENTRY       = 16;
@@ -36,14 +36,18 @@
 
         public function import($sfnt): void {
             if (!is_string($sfnt))
-                throw new \Exception("File must be supplied as a string.");
+                throw new \InvalidArgumentException(
+                    "File must be supplied as a string."
+                );
 
             $sfnt_length = strlen($sfnt);
             $sfnt_tables = array();
             $woff_tables = array();
 
             if (self::SIZEOF_SFNT_OFFSET > $sfnt_length)
-                throw new \Exception("File does not contain SFNT data.");
+                throw new \RangeException(
+                    "File does not contain SFNT data."
+                );
 
             $sfnt_offset = unpack(
                 "H8flavor/nnumTables",
@@ -58,7 +62,9 @@
                 $target = $offset + self::SIZEOF_SFNT_ENTRY;
 
                 if ($target > $sfnt_length)
-                    throw new \Exception("File ended unexpectedly.");
+                    throw new \LengthException(
+                        "File ended unexpectedly."
+                    );
 
                 $sfnt_tables[$i] = unpack(
                     "a4tag/H8checkSum/H8offset/H8length",
@@ -70,7 +76,9 @@
                 $target = $sfnt_tables[$i]["offset"] + $sfnt_tables[$i]["length"];
 
                 if ($target > $sfnt_length)
-                    throw new \Exception("File ended unexpectedly.");
+                    throw new \LengthException(
+                        "File ended unexpectedly."
+                    );
 
                 $sfnt_tables[$i]["tableData"] = substr(
                     $sfnt,
@@ -98,7 +106,9 @@
             );
 
             if (empty($sfnt_tables))
-                throw new \Exception("No SFNT data to export.");
+                throw new \LengthException(
+                    "No SFNT data to export."
+                );
 
             for ($i = 0; $i < $table_count; $i++) {
                 $sfnt_orig = $sfnt_tables[$i]["tableData"];
@@ -195,12 +205,16 @@
 
         public function set_woff_meta($object): void {
             if (!$object instanceof SimpleXMLElement)
-                throw new \Exception("Extended metadata must be a SimpleXMLElement.");
+                throw new \InvalidArgumentException(
+                    "Extended metadata must be a SimpleXMLElement."
+                );
 
             $xml = $object->asXML();
 
             if ($xml === false)
-                throw new \Exception("Extended metadata object failed to return XML.");
+                throw new \UnexpectedValueException(
+                    "Extended metadata object failed to return XML."
+                );
 
             $this->woff_meta["origData"] = $xml;
             $this->woff_meta["compData"] = $this->compress($xml);
@@ -214,17 +228,23 @@
 
         public function set_woff_priv($string): void {
             if (!is_string($string))
-                throw new \Exception("Private data block must be a string.");
+                throw new \InvalidArgumentException(
+                    "Private data block must be a string."
+                );
 
             if (strlen($string) === 0)
-                throw new \Exception("Private data block cannot be zero length.");
+                throw new \LengthException(
+                    "Private data block cannot be zero length."
+                );
 
             $this->woff_priv["privData"] = $string;
         }
 
         private function compress($data): string {
             if (!function_exists("gzcompress"))
-                throw new \Exception("ZLIB support required.");
+                throw new \BadFunctionCallException(
+                    "ZLIB support required."
+                );
 
             $level = (int) $this->compression_level;
 
@@ -234,7 +254,9 @@
             $comp = gzcompress($data, $level, ZLIB_ENCODING_DEFLATE);
 
             if ($data === false)
-                throw new \Exception("ZLIB compression failed.");
+                throw new \UnexpectedValueException(
+                    "ZLIB compression failed."
+                );
 
             return $comp;
         }
@@ -277,7 +299,9 @@
                     continue;
 
                 if ($comp_checksum !== $orig_checksum)
-                    throw new \Exception("Checksum mismatch in table data.");
+                    throw new \UnexpectedValueException(
+                        "Checksum mismatch in table data."
+                    );
             }
         }
 
