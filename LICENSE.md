@@ -1,6 +1,6 @@
 ## BSD 3-Clause License
 
-Copyright 2019-2022 Daniel Pimley.
+Copyright 2019-2024 Daniel Pimley.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
