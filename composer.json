@@ -1,0 +1,24 @@
+{
+    "name": "xenocrat/sfnt2woff",
+    "description": "A PHP class for converting OTF/TTF files to WOFF.",
+    "keywords": ["font", "converter", "woff", "ttf", "otf"],
+    "homepage": "https://github.com/xenocrat/sfnt2woff",
+    "type": "library",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Daniel Pimley",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.0.0",
+        "ext-SPL": "*",
+        "ext-zlib": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "xenocrat\\sfnt2woff\\": ""
+        }
+    }
+}
