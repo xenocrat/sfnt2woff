@@ -2,39 +2,42 @@
     namespace xenocrat;
 
     class sfnt2woff {
-        const SFNT2WOFF_VERSION_MAJOR = 3;
-        const SFNT2WOFF_VERSION_MINOR = 4;
+        const VERSION_MAJOR          = 3;
+        const VERSION_MINOR          = 5;
+        const VERSION_PATCH          = 0;
 
-        const SIZEOF_SFNT_OFFSET      = 12;
-        const SIZEOF_SFNT_ENTRY       = 16;
-        const SIZEOF_WOFF_HEADER      = 44;
-        const SIZEOF_WOFF_ENTRY       = 20;
+        const SIZEOF_SFNT_OFFSET     = 12;
+        const SIZEOF_SFNT_ENTRY      = 16;
+        const SIZEOF_WOFF_HEADER     = 44;
+        const SIZEOF_WOFF_ENTRY      = 20;
 
-        const WOFF_SIGNATURE          = 0x774F4646;
-        const WOFF_RESERVED           = 0;
+        const WOFF_SIGNATURE         = 0x774F4646;
+        const WOFF_RESERVED          = 0;
 
-        public $compression_level     = 6;
-        public $strict                = true;
-        public $version_major         = self::SFNT2WOFF_VERSION_MAJOR;
-        public $version_minor         = self::SFNT2WOFF_VERSION_MINOR;
+        public $compression_level    = 6;
+        public $strict               = true;
+        public $version_major        = self::VERSION_MAJOR;
+        public $version_minor        = self::VERSION_MINOR;
 
-        private $sfnt_offset          = array();
-        private $sfnt_tables          = array();
-        private $woff_tables          = array();
-        private $woff_meta            = array();
-        private $woff_priv            = array();
+        private $sfnt_offset         = array();
+        private $sfnt_tables         = array();
+        private $woff_tables         = array();
+        private $woff_meta           = array();
+        private $woff_priv           = array();
 
-        private $woff_flavor          = 0;
-        private $woff_length          = 0;
-        private $woff_numtables       = 0;
-        private $woff_totalsfntsize   = 0;
-        private $woff_metaoffset      = 0;
-        private $woff_metalength      = 0;
-        private $woff_metaoriglength  = 0;
-        private $woff_privoffset      = 0;
-        private $woff_privlength      = 0;
+        private $woff_flavor         = 0;
+        private $woff_length         = 0;
+        private $woff_numtables      = 0;
+        private $woff_totalsfntsize  = 0;
+        private $woff_metaoffset     = 0;
+        private $woff_metalength     = 0;
+        private $woff_metaoriglength = 0;
+        private $woff_privoffset     = 0;
+        private $woff_privlength     = 0;
 
-        public function import($sfnt): void {
+        public function import(
+            $sfnt
+        ): void {
             if (!is_string($sfnt))
                 throw new \InvalidArgumentException(
                     "File must be supplied as a string."
@@ -92,7 +95,8 @@
             $this->woff_tables = $woff_tables;
         }
 
-        public function export(): string {
+        public function export(
+        ): string {
             $woff_export = "";
             $woff_flavor = $this->sfnt_offset["flavor"];
             $woff_tables = array();
@@ -175,7 +179,8 @@
             return $woff_export;
         }
 
-        public function get_sfnt_entries(): array|false {
+        public function get_sfnt_entries(
+        ): array|false {
             $tables = $this->sfnt_tables;
 
             foreach ($tables as &$table)
@@ -186,7 +191,8 @@
                 $tables ;
         }
 
-        public function get_woff_entries(): array|false {
+        public function get_woff_entries(
+        ): array|false {
             $tables = $this->woff_tables;
 
             foreach ($tables as &$table)
@@ -197,13 +203,16 @@
                 $tables ;
         }
 
-        public function get_woff_meta(): string|false {
+        public function get_woff_meta(
+        ): string|false {
             return empty($this->woff_meta) ?
                 false :
                 $this->woff_meta["origData"] ;
         }
 
-        public function set_woff_meta($object): void {
+        public function set_woff_meta(
+            $object
+        ): void {
             if (!$object instanceof SimpleXMLElement)
                 throw new \InvalidArgumentException(
                     "Extended metadata must be a SimpleXMLElement."
@@ -220,13 +229,16 @@
             $this->woff_meta["compData"] = $this->compress($xml);
         }
 
-        public function get_woff_priv(): string|false {
+        public function get_woff_priv(
+        ): string|false {
             return empty($this->woff_priv) ?
                 false :
                 $this->woff_priv["privData"] ;
         }
 
-        public function set_woff_priv($string): void {
+        public function set_woff_priv(
+            $string
+        ): void {
             if (!is_string($string))
                 throw new \InvalidArgumentException(
                     "Private data block must be a string."
@@ -240,7 +252,9 @@
             $this->woff_priv["privData"] = $string;
         }
 
-        private function compress($data): string {
+        private function compress(
+            $data
+        ): string {
             if (!function_exists("gzcompress"))
                 throw new \BadFunctionCallException(
                     "ZLIB support required."
@@ -261,7 +275,9 @@
             return $comp;
         }
 
-        private function pad_data($data): string {
+        private function pad_data(
+            $data
+        ): string {
             return str_pad(
                 $data,
                 (ceil(strlen($data) / 4) * 4),
@@ -270,11 +286,15 @@
             );
         }
 
-        private function pad_offset($offset): int {
+        private function pad_offset(
+            $offset
+        ): int {
             return ceil($offset / 4) * 4;
         }
 
-        private function calc_checksum($data): string {
+        private function calc_checksum(
+            $data
+        ): string {
             $data = $this->pad_data($data);
             $size = ceil(strlen($data) / 4);
             $sum = 0;
@@ -290,7 +310,9 @@
             return str_pad(dechex($sum), 8, "0", STR_PAD_LEFT);
         }
 
-        private function test_integrity($tables): void {
+        private function test_integrity(
+            $tables
+        ): void {
             foreach ($tables as $table) {
                 $comp_checksum = $table["calcChecksum"];
                 $orig_checksum = $table["origChecksum"];
@@ -305,14 +327,18 @@
             }
         }
 
-        private function sort_tables_by_tag($tables): array {
+        private function sort_tables_by_tag(
+            $tables
+        ): array {
             usort($tables, function($a, $b) {
                 return substr_compare($a["tag"], $b["tag"], 0);
             });
             return $tables;
         }
 
-        private function sort_tables_by_offset($tables): array {
+        private function sort_tables_by_offset(
+            $tables
+        ): array {
             usort($tables, function($a, $b) {
                 if ($a["offset"] == $b["offset"])
                     return 0;
@@ -322,7 +348,9 @@
             return $tables;
         }
 
-        private function append_woff_header(&$data): void {
+        private function append_woff_header(
+            &$data
+        ): void {
             $data.= pack(
                 "N1H8N1n1n1N1n1n1N1N1N1N1N1",
                 self::WOFF_SIGNATURE,
@@ -341,7 +369,9 @@
             );
         }
 
-        private function append_woff_directory(&$data): void {
+        private function append_woff_directory(
+            &$data
+        ): void {
             $woff_tables = $this->sort_tables_by_tag($this->woff_tables);
 
             foreach ($woff_tables as $woff_table)
@@ -355,14 +385,18 @@
                 );
         }
 
-        private function append_woff_tables(&$data): void {
+        private function append_woff_tables(
+            &$data
+        ): void {
             $woff_tables = $this->sort_tables_by_offset($this->woff_tables);
 
             foreach ($woff_tables as $woff_table)
                 $data.= $woff_table["tableData"];
         }
 
-        private function append_woff_meta(&$data): void {
+        private function append_woff_meta(
+            &$data
+        ): void {
             if (empty($this->woff_meta))
                 return;
 
@@ -370,7 +404,9 @@
             $data.= $this->woff_meta["compData"];
         }
 
-        private function append_woff_priv(&$data): void {
+        private function append_woff_priv(
+            &$data
+        ): void {
             if (empty($this->woff_priv))
                 return;
 
