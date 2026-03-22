@@ -88,13 +88,13 @@
             "Sill" => 62
         );
 
-        private $version_major    = self::VERSION_MAJOR;
-        private $version_minor    = self::VERSION_MINOR;
-        private $sfnt_offset      = array();
-        private $sfnt_tables      = array();
-        private $woff_tables      = array();
-        private $woff_meta        = array();
-        private $woff_priv        = array();
+        private $version_major   = self::VERSION_MAJOR;
+        private $version_minor   = self::VERSION_MINOR;
+        private $sfnt_offset     = array();
+        private $sfnt_tables     = array();
+        private $woff_tables     = array();
+        private $woff_meta       = array();
+        private $woff_priv       = array();
 
         public function sfnt_import(
             $sfnt
