@@ -169,7 +169,7 @@ Get the WOFF extended metadata block.
 
 #### Return Values
 
-Returns an object of type SimpleXMLElement representing the XML metadata.
+Returns an object of type SimpleXMLElement representing the XML metadata, or `false` if no metadata block has been set.
 
 ### `set_woff_priv`
 
@@ -202,4 +202,4 @@ Get the WOFF private data block.
 
 #### Return Values
 
-Returns a string of data representing the private data block.
+Returns a string of data representing the private data block, or `false` if no private data block has been set.
