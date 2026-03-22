@@ -5,45 +5,199 @@ sfnt2woff is a PHP class for converting OTF/TTF files to WOFF.
 ## Requirements
 
 * PHP 8.0+
-* ZLIB extension
+* ZLIB extension for WOFF 1.0 export
+* [Brotli extension](https://github.com/kjdev/php-ext-brotli) for WOFF 2.0 export
 
 ## Usage
 
-Convert a font to WOFF:
+Convert a font to WOFF 1.0:
 
     $sfnt2woff = new \xenocrat\sfnt2woff();
     $sfnt = file_get_contents("font.ttf");
-    $sfnt2woff->import($sfnt);
-    $woff = $sfnt2woff->export();
+    $sfnt2woff->sfnt_import($sfnt);
+    $woff = $sfnt2woff->woff1_export();
     file_put_contents("font.woff", $woff);
 
-Import OTF/TTF font file:
+Convert a font to WOFF 2.0:
 
-    $sfnt2woff->import($sfnt);
+    $sfnt2woff = new \xenocrat\sfnt2woff();
+    $sfnt = file_get_contents("font.ttf");
+    $sfnt2woff->sfnt_import($sfnt);
+    $woff = $sfnt2woff->woff2_export();
+    file_put_contents("font.woff2", $woff);
 
-Disable the integrity test:
+### `sfnt_import`
 
-    $sfnt2woff->strict = false;
+#### Description
 
-Set the compression level (1-9):
+``` php
+public sfnt2woff::sfnt_import(
+    string $sfnt
+): void
+```
 
-    $sfnt2woff->compression_level = 9;
+This function imports SFNT data from a TTF or OTF font source.
 
-Set the WOFF file version:
+#### Parameters
 
-    $sfnt2woff->version_major = 1;
-    $sfnt2woff->version_minor = 1;
+* _sfnt_
 
-Set the extended metadata block:
+  The SFNT data.
 
-    $xml = simplexml_load_file("example.xml");
-    $sfnt2woff->set_meta($xml);
+### `woff1_export`
 
-Set the private data block:
+#### Description
 
-    $string = sha1("example");
-    $sfnt2woff->set_priv($string);
+``` php
+public sfnt2woff::woff1_export(
+    int $compression_level = -1,
+    bool $test_integrity = true
+): string
+```
 
-Export the WOFF font file:
+This function exports SFNT data in WOFF 1.0 format.
 
-    $woff = $sfnt2woff->export();
+#### Parameters
+
+* _compression\_level_
+
+  The compression level, from 0 (minimum) to 9 (maximum).
+
+* _test\_integrity_
+
+  Whether or not to verify the table data checksums before export.
+
+#### Return Values
+
+Returns a complete WOFF 1.0 file as a string of data.
+
+### `woff2_export`
+
+#### Description
+
+``` php
+public sfnt2woff::woff2_export(
+    int $compression_level = -1,
+    bool $test_integrity = true
+): string
+```
+
+This function exports SFNT data in WOFF 2.0 format.
+
+#### Parameters
+
+* _compression\_level_
+
+  The compression level, from 0 (minimum) to 11 (maximum).
+
+* _test\_integrity_
+
+  Whether or not to verify the table data checksums before export.
+
+#### Return Values
+
+Returns a complete WOFF 2.0 file as a string of data.
+
+### `set_woff_version`
+
+#### Description
+
+``` php
+public sfnt2woff::set_woff_version(
+    int $major,
+    int $major
+): void
+```
+
+Set the major and minor version number for WOFF exports.
+
+#### Parameters
+
+* _major_
+
+  The major version, an integer in the range 0-65535.
+
+* _minor_
+
+  The minor version, an integer in the range 0-65535.
+
+### `get_woff_version`
+
+#### Description
+
+``` php
+public sfnt2woff::get_woff_version(
+): array
+```
+
+Get the major and minor version number for WOFF exports.
+
+#### Return Values
+
+Returns an array of two integers representing the major and minor version.
+
+### `set_woff_meta`
+
+#### Description
+
+``` php
+public sfnt2woff::set_woff_meta(
+    SimpleXMLElement $object
+): void
+```
+
+Set the WOFF extended metadata block.
+
+#### Parameters
+
+* _object_
+
+  An object of type SimpleXMLElement representing the XML metadata.
+
+### `get_woff_meta`
+
+#### Description
+
+``` php
+public sfnt2woff::get_woff_meta(
+): object|false
+```
+
+Get the WOFF extended metadata block.
+
+#### Return Values
+
+Returns an object of type SimpleXMLElement representing the XML metadata.
+
+### `set_woff_priv`
+
+#### Description
+
+``` php
+public sfnt2woff::set_woff_priv(
+    string $data
+): void
+```
+
+Set the WOFF private data block.
+
+#### Parameters
+
+* _data_
+
+  A string of data representing the private data block.
+
+### `get_woff_priv`
+
+#### Description
+
+``` php
+public sfnt2woff::get_woff_priv(
+): string|false
+```
+
+Get the WOFF private data block.
+
+#### Return Values
+
+Returns a string of data representing the private data block.
