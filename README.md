@@ -44,7 +44,7 @@ This function imports SFNT data from a TTF or OTF font source.
 
 * _sfnt_
 
-  The SFNT data.
+  A complete SFNT file as a string of data.
 
 ### `woff1_export`
 
