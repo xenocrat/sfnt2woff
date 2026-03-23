@@ -12,19 +12,23 @@ sfnt2woff is a PHP class for converting OTF/TTF files to WOFF 1.0 and 2.0.
 
 Convert a font to WOFF 1.0:
 
-    $sfnt2woff = new \xenocrat\sfnt2woff();
-    $sfnt = file_get_contents("font.ttf");
-    $sfnt2woff->sfnt_import($sfnt);
-    $woff = $sfnt2woff->woff1_export();
-    file_put_contents("font.woff", $woff);
+``` php
+$sfnt2woff = new \xenocrat\sfnt2woff();
+$sfnt = file_get_contents("font.ttf");
+$sfnt2woff->sfnt_import($sfnt);
+$woff = $sfnt2woff->woff1_export();
+file_put_contents("font.woff", $woff);
+```
 
 Convert a font to WOFF 2.0:
 
-    $sfnt2woff = new \xenocrat\sfnt2woff();
-    $sfnt = file_get_contents("font.ttf");
-    $sfnt2woff->sfnt_import($sfnt);
-    $woff = $sfnt2woff->woff2_export();
-    file_put_contents("font.woff2", $woff);
+``` php
+$sfnt2woff = new \xenocrat\sfnt2woff();
+$sfnt = file_get_contents("font.ttf");
+$sfnt2woff->sfnt_import($sfnt);
+$woff = $sfnt2woff->woff2_export();
+file_put_contents("font.woff2", $woff);
+```
 
 ## Methods
 
@@ -44,7 +48,7 @@ This function imports SFNT data from a TTF or OTF font source.
 
 * _sfnt_
 
-  A complete SFNT file as a string of data.
+  A complete TTF or OTF file as a string of data.
 
 ### `woff1_export`
 
