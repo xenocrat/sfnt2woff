@@ -53,7 +53,7 @@ This function imports SFNT data from a TTF or OTF font source.
 ``` php
 public sfnt2woff::woff1_export(
     int $compression_level = -1,
-    bool $test_integrity = true
+    bool $verify_checksums = true
 ): string
 ```
 
@@ -65,9 +65,9 @@ This function exports SFNT data in WOFF 1.0 format.
 
   The compression level, from 0 (minimum) to 9 (maximum).
 
-* _test\_integrity_
+* _verify\_checksums_
 
-  Whether or not to verify the table data checksums before export.
+  Whether or not to verify the table checksums before export.
 
 #### Return Values
 
@@ -80,7 +80,7 @@ Returns a complete WOFF 1.0 file as a string of data.
 ``` php
 public sfnt2woff::woff2_export(
     int $compression_level = -1,
-    bool $test_integrity = true
+    bool $verify_checksums = true
 ): string
 ```
 
@@ -92,9 +92,9 @@ This function exports SFNT data in WOFF 2.0 format.
 
   The compression level, from 0 (minimum) to 11 (maximum).
 
-* _test\_integrity_
+* _verify\_checksums_
 
-  Whether or not to verify the table data checksums before export.
+  Whether or not to verify the table checksums before export.
 
 #### Return Values
 
@@ -111,7 +111,7 @@ public sfnt2woff::set_woff_version(
 ): void
 ```
 
-Set the major and minor version number for WOFF exports.
+Set the major and minor version numbers for WOFF exports.
 
 #### Parameters
 
@@ -132,11 +132,11 @@ public sfnt2woff::get_woff_version(
 ): array
 ```
 
-Get the major and minor version number for WOFF exports.
+Get the major and minor version numbers for WOFF exports.
 
 #### Return Values
 
-Returns an array of two integers representing the major and minor version.
+Returns an array of two integers representing the major and minor version numbers.
 
 ### `set_woff_meta`
 
@@ -154,7 +154,7 @@ Set the WOFF extended metadata block.
 
 * _object_
 
-  An object of type SimpleXMLElement representing the XML metadata.
+  A SimpleXMLElement object representing the XML metadata.
 
 ### `get_woff_meta`
 
@@ -169,7 +169,7 @@ Get the WOFF extended metadata block.
 
 #### Return Values
 
-Returns an object of type SimpleXMLElement representing the XML metadata, or `false` if no metadata block has been set.
+Returns a SimpleXMLElement object representing the XML metadata, or `false` if no metadata block has been set.
 
 ### `set_woff_priv`
 
