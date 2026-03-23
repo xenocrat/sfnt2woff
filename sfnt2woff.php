@@ -171,7 +171,7 @@
 
         public function woff1_export(
             $compression_level = -1,
-            $test_integrity = true
+            $verify_checksums = true
         ): string {
             $woff_flavor = $this->sfnt_offset["flavor"];
             $woff_tables = array();
@@ -225,8 +225,8 @@
                 );
             }
 
-            if ($test_integrity)
-                $this->test_integrity($woff_tables);
+            if ($verify_checksums)
+                $this->verify_checksum($woff_tables);
 
             $woff_meta_offset      = 0;
             $woff_meta_length      = 0;
@@ -292,7 +292,7 @@
 
         public function woff2_export(
             $compression_level = -1,
-            $test_integrity = true
+            $verify_checksums = true
         ): string {
             $woff_flavor = $this->sfnt_offset["flavor"];
             $woff_tables = array();
@@ -330,8 +330,8 @@
                 );
             }
 
-            if ($test_integrity)
-                $this->test_integrity($woff_tables);
+            if ($verify_checksums)
+                $this->verify_checksum($woff_tables);
 
             $woff_tables_comp = $this->br_compress(
                 $woff_tables_orig,
@@ -458,7 +458,7 @@
         ): void {
             if (!$object instanceof \SimpleXMLElement)
                 throw new \InvalidArgumentException(
-                    "Extended metadata must be of type SimpleXMLElement."
+                    "Extended metadata must be a SimpleXMLElement."
                 );
 
             $xml = $object->asXML();
@@ -605,7 +605,7 @@
             return str_pad(dechex($sum), 8, "0", STR_PAD_LEFT);
         }
 
-        private function test_integrity(
+        private function verify_checksum(
             $tables
         ): void {
             foreach ($tables as $table) {
