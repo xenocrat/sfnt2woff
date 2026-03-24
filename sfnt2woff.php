@@ -12,7 +12,7 @@
         const SFNT_FLAVOR_TRUE   = "74727565";
         const SFNT_FLAVOR_TTCF   = "74746366";
 
-        const SFNT_OFFSET_SIZE   = 12;
+        const SFNT_HEADER_SIZE   = 12;
         const SFNT_ENTRY_SIZE    = 16;
 
         const WOFF1_SIGNATURE    = 0x774F4646;
@@ -90,7 +90,7 @@
 
         private $version_major   = self::VERSION_MAJOR;
         private $version_minor   = self::VERSION_MINOR;
-        private $sfnt_offset     = array();
+        private $sfnt_header     = array();
         private $sfnt_tables     = array();
         private $woff_tables     = array();
         private $woff_meta       = array();
@@ -108,21 +108,21 @@
             $sfnt_tables = array();
             $woff_tables = array();
 
-            if (self::SFNT_OFFSET_SIZE > $sfnt_length)
+            if (self::SFNT_HEADER_SIZE > $sfnt_length)
                 throw new \RangeException(
                     "File does not contain SFNT data."
                 );
 
-            $sfnt_offset = unpack(
+            $sfnt_header = unpack(
                 "H8flavor/nnumTables",
                 $sfnt
             );
 
-            $table_count = $sfnt_offset["numTables"];
+            $table_count = $sfnt_header["numTables"];
 
             for ($i = 0; $i < $table_count; $i++) {
 
-                $offset = self::SFNT_OFFSET_SIZE + (
+                $offset = self::SFNT_HEADER_SIZE + (
                     $i * self::SFNT_ENTRY_SIZE
                 );
 
@@ -164,7 +164,7 @@
                 );
             }
 
-            $this->sfnt_offset = $sfnt_offset;
+            $this->sfnt_header = $sfnt_header;
             $this->sfnt_tables = $sfnt_tables;
             $this->woff_tables = $woff_tables;
         }
@@ -173,7 +173,7 @@
             $compression_level = -1,
             $verify_checksums = true
         ): string {
-            $woff_flavor = $this->sfnt_offset["flavor"];
+            $woff_flavor = $this->sfnt_header["flavor"];
             $woff_tables = array();
 
             $sfnt_tables = $this->sort_tables_by_offset(
@@ -186,7 +186,7 @@
                 $table_count * self::WOFF1_ENTRY_SIZE
             );
 
-            $sfnt_offset = self::SFNT_OFFSET_SIZE + (
+            $sfnt_offset = self::SFNT_HEADER_SIZE + (
                 $table_count * self::SFNT_ENTRY_SIZE
             );
 
@@ -293,13 +293,13 @@
             $compression_level = -1,
             $verify_checksums = true
         ): string {
-            $woff_flavor = $this->sfnt_offset["flavor"];
+            $woff_flavor = $this->sfnt_header["flavor"];
             $woff_tables = array();
             $sfnt_tables = $this->sort_tables_by_glyf($this->sfnt_tables);
             $table_count = count($sfnt_tables);
             $woff_tables_orig = "";
 
-            $sfnt_offset = self::SFNT_OFFSET_SIZE + (
+            $sfnt_offset = self::SFNT_HEADER_SIZE + (
                 $table_count * self::SFNT_ENTRY_SIZE
             );
 
@@ -635,7 +635,6 @@
 
                 if ($i < $size - 1)
                     $byte |= 0x80;
-
 
                 $num.= chr($byte);
             }
