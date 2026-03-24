@@ -273,9 +273,8 @@
                 $woff_tables
             );
 
-            $woff_export.= $this->create_woff1_tables(
-                $woff_tables
-            );
+            foreach ($woff_tables as $table)
+                $woff_export.= $table["tableData"];
 
             if (isset($woff_meta_comp)) {
                 $woff_export = $this->pad_data($woff_export);
@@ -735,18 +734,6 @@
                     $table["origLength"],
                     $table["origChecksum"]
                 );
-
-            return $data;
-        }
-
-        private function create_woff1_tables(
-            $tables
-        ): string {
-            $tables = $this->sort_tables_by_offset($tables);
-            $data = "";
-
-            foreach ($tables as $table)
-                $data.= $table["tableData"];
 
             return $data;
         }
