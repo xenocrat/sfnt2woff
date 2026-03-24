@@ -226,7 +226,7 @@
             }
 
             if ($verify_checksums)
-                $this->verify_checksum($woff_tables);
+                $this->verify_checksums($woff_tables);
 
             $woff_meta_offset      = 0;
             $woff_meta_length      = 0;
@@ -331,7 +331,7 @@
             }
 
             if ($verify_checksums)
-                $this->verify_checksum($woff_tables);
+                $this->verify_checksums($woff_tables);
 
             $woff_tables_comp = $this->br_compress(
                 $woff_tables_orig,
@@ -605,7 +605,7 @@
             return str_pad(dechex($sum), 8, "0", STR_PAD_LEFT);
         }
 
-        private function verify_checksum(
+        private function verify_checksums(
             $tables
         ): void {
             foreach ($tables as $table) {
