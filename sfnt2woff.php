@@ -589,19 +589,23 @@
         private function calc_checksum(
             $data
         ): string {
-            $data = $this->pad_data($data);
-            $size = strlen($data) / 4;
-            $sum = 0;
+            if (PHP_INT_SIZE < 8)
+                throw new \RuntimeException(
+                    "Checksum calculation requires 64-bit integers."
+                );
 
-            for ($i = 0; $i < $size; $i++) {
-                # Unpack a uint32 to be added to the sum.
-                $add = unpack("N", $data, $i * 4);
+            $nums = unpack("N*", $this->pad_data($data));
+            $result = 0;
 
-                # Add to sum and simulate uint32 overflow.
-                $sum = (($sum + $add[1]) & 0xffffffff);
-            }
+            foreach ($nums as $num)
+                $result = ($result + $num) & 0xffffffff;
 
-            return str_pad(dechex($sum), 8, "0", STR_PAD_LEFT);
+            return str_pad(
+                dechex($result),
+                8,
+                "0",
+                STR_PAD_LEFT
+            );
         }
 
         private function verify_checksums(
