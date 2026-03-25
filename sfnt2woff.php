@@ -7,10 +7,10 @@
         const VERSION_PATCH      = 0;
         const WOFF_RESERVED      = 0;
 
-        const SFNT_FLAVOR_0100   = "00010000";
-        const SFNT_FLAVOR_OTTO   = "4F54544F";
-        const SFNT_FLAVOR_TRUE   = "74727565";
-        const SFNT_FLAVOR_TTCF   = "74746366";
+        const SFNT_FLAVOR_0100   = 0x00010000;
+        const SFNT_FLAVOR_OTTO   = 0x4F54544F;
+        const SFNT_FLAVOR_TRUE   = 0x74727565;
+        const SFNT_FLAVOR_TTCF   = 0x74746366;
 
         const SFNT_HEADER_SIZE   = 12;
         const SFNT_ENTRY_SIZE    = 16;
@@ -114,7 +114,7 @@
                 );
 
             $sfnt_header = unpack(
-                "H8flavor/nnumTables",
+                "N1flavor/n1numTables",
                 $sfnt
             );
 
@@ -701,7 +701,7 @@
             $woff_priv_length
         ): string {
             return pack(
-                "N1H8N1n1n1N1n1n1N1N1N1N1N1",
+                "N1N1N1n1n1N1n1n1N1N1N1N1N1",
                 self::WOFF1_SIGNATURE,
                 $woff_flavor,
                 $woff_length,
@@ -750,7 +750,7 @@
             $woff_priv_length
         ): string {
             return pack(
-                "N1H8N1n1n1N1N1n1n1N1N1N1N1N1",
+                "N1N1N1n1n1N1N1n1n1N1N1N1N1N1",
                 self::WOFF2_SIGNATURE,
                 $woff_flavor,
                 $woff_length,
