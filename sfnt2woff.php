@@ -589,11 +589,6 @@
         private function calc_checksum(
             $data
         ): string {
-            if (PHP_INT_SIZE < 8)
-                throw new \RuntimeException(
-                    "Checksum calculation requires 64-bit integers."
-                );
-
             $nums = unpack("N*", $this->pad_data($data));
             $result = 0;
 
