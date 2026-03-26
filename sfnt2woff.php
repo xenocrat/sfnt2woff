@@ -97,7 +97,8 @@
         private $woff_priv       = array();
 
         public function sfnt_import(
-            $sfnt
+            $sfnt,
+            $verify_checksums = true
         ): void {
             if (!is_string($sfnt))
                 throw new \InvalidArgumentException(
@@ -134,17 +135,9 @@
                     );
 
                 $sfnt_tables[$i] = unpack(
-                    "A4tag/H8checkSum/H8offset/H8length",
+                    "A4tag/N1checksum/N1offset/N1length",
                     $sfnt,
                     $offset
-                );
-
-                $sfnt_tables[$i]["offset"] = hexdec(
-                    $sfnt_tables[$i]["offset"]
-                );
-
-                $sfnt_tables[$i]["length"] = hexdec(
-                    $sfnt_tables[$i]["length"]
                 );
 
                 $target = (
@@ -164,14 +157,25 @@
                 );
             }
 
+            if ($verify_checksums) {
+                foreach ($sfnt_tables as $table) {
+                    if ($table["tag"] == "head")
+                        continue;
+
+                    $this->verify_checksums(
+                        $table["checksum"],
+                        $table["tableData"]
+                    );
+                }
+            }
+
             $this->sfnt_header = $sfnt_header;
             $this->sfnt_tables = $sfnt_tables;
             $this->woff_tables = $woff_tables;
         }
 
         public function woff1_export(
-            $compression_level = -1,
-            $verify_checksums = true
+            $compression_level = -1
         ): string {
             $woff_flavor = $this->sfnt_header["flavor"];
             $woff_tables = array();
@@ -211,8 +215,7 @@
                     "offset"       => $woff_offset,
                     "compLength"   => strlen($sfnt_table_comp),
                     "origLength"   => strlen($sfnt_table_orig),
-                    "calcChecksum" => $this->calc_checksum($sfnt_table_orig),
-                    "origChecksum" => $sfnt_tables[$i]["checkSum"],
+                    "origChecksum" => $sfnt_tables[$i]["checksum"],
                     "tableData"    => $this->pad_data($sfnt_table_comp)
                 );
 
@@ -224,9 +227,6 @@
                     $this->pad_data($sfnt_table_orig)
                 );
             }
-
-            if ($verify_checksums)
-                $this->verify_checksums($woff_tables);
 
             $woff_meta_offset      = 0;
             $woff_meta_length      = 0;
@@ -290,8 +290,7 @@
         }
 
         public function woff2_export(
-            $compression_level = -1,
-            $verify_checksums = true
+            $compression_level = -1
         ): string {
             $woff_flavor = $this->sfnt_header["flavor"];
             $woff_tables = array();
@@ -320,17 +319,13 @@
                 $woff_tables[$i] = array(
                     "tag"          => $sfnt_tables[$i]["tag"],
                     "origLength"   => strlen($sfnt_table_orig),
-                    "calcChecksum" => $this->calc_checksum($sfnt_table_orig),
-                    "origChecksum" => $sfnt_tables[$i]["checkSum"],
+                    "origChecksum" => $sfnt_tables[$i]["checksum"],
                 );
 
                 $sfnt_offset+= strlen(
                     $this->pad_data($sfnt_table_orig)
                 );
             }
-
-            if ($verify_checksums)
-                $this->verify_checksums($woff_tables);
 
             $woff_tables_comp = $this->br_compress(
                 $woff_tables_orig,
@@ -588,36 +583,29 @@
 
         private function calc_checksum(
             $data
-        ): string {
+        ): int {
             $nums = unpack("N*", $this->pad_data($data));
             $result = 0;
 
             foreach ($nums as $num)
                 $result = ($result + $num) & 0xffffffff;
 
-            return str_pad(
-                dechex($result),
-                8,
-                "0",
-                STR_PAD_LEFT
-            );
+            return $result;
         }
 
         private function verify_checksums(
-            $tables
+            $checksum,
+            $data
         ): void {
-            foreach ($tables as $table) {
-                $comp_checksum = $table["calcChecksum"];
-                $orig_checksum = $table["origChecksum"];
+            if (PHP_INT_SIZE < 8)
+                throw new \RuntimeException(
+                    "Checksum calculation requires 64-bit integers."
+                );
 
-                if ($table["tag"] == "head")
-                    continue;
-
-                if ($comp_checksum !== $orig_checksum)
-                    throw new \UnexpectedValueException(
-                        "Checksum mismatch in table data."
-                    );
-            }
+            if ($this->calc_checksum($data) !== $checksum)
+                throw new \UnexpectedValueException(
+                    "Checksum mismatch in table data."
+                );
         }
 
         private function base128_encode(
