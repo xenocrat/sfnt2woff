@@ -162,7 +162,7 @@
                     if ($table["tag"] == "head")
                         continue;
 
-                    $this->verify_checksums(
+                    $this->verify_checksum(
                         $table["checksum"],
                         $table["tableData"]
                     );
@@ -593,7 +593,7 @@
             return $result;
         }
 
-        private function verify_checksums(
+        private function verify_checksum(
             $checksum,
             $data
         ): void {
