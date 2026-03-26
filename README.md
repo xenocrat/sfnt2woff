@@ -38,7 +38,8 @@ file_put_contents("font.woff2", $woff);
 
 ``` php
 public sfnt2woff::sfnt_import(
-    string $sfnt
+    string $sfnt,
+    bool $verify_checksums = true
 ): void
 ```
 
@@ -50,14 +51,17 @@ This function imports SFNT data from a TTF or OTF font source.
 
   A complete TTF or OTF file as a string of data.
 
+* _verify\_checksums_
+
+  Whether or not to verify the table data checksums on import.
+
 ### `woff1_export`
 
 #### Description
 
 ``` php
 public sfnt2woff::woff1_export(
-    int $compression_level = -1,
-    bool $verify_checksums = true
+    int $compression_level = -1
 ): string
 ```
 
@@ -69,10 +73,6 @@ This function exports SFNT data in WOFF 1.0 format.
 
   The compression level, from 0 (minimum) to 9 (maximum).
 
-* _verify\_checksums_
-
-  Whether or not to verify the table checksums before export.
-
 #### Return Values
 
 Returns a complete WOFF 1.0 file as a string of data.
@@ -83,8 +83,7 @@ Returns a complete WOFF 1.0 file as a string of data.
 
 ``` php
 public sfnt2woff::woff2_export(
-    int $compression_level = -1,
-    bool $verify_checksums = true
+    int $compression_level = -1
 ): string
 ```
 
@@ -95,10 +94,6 @@ This function exports SFNT data in WOFF 2.0 format.
 * _compression\_level_
 
   The compression level, from 0 (minimum) to 11 (maximum).
-
-* _verify\_checksums_
-
-  Whether or not to verify the table checksums before export.
 
 #### Return Values
 
