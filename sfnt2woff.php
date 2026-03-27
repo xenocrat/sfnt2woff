@@ -119,7 +119,13 @@
                 $sfnt
             );
 
+            $sfnt_flavor = $sfnt_header["flavor"];
             $table_count = $sfnt_header["numTables"];
+
+            if ($sfnt_flavor === self::SFNT_FLAVOR_TTCF)
+                throw new \UnexpectedValueException(
+                    "TrueType Font Collection files are not supported."
+                );
 
             for ($i = 0; $i < $table_count; $i++) {
 
@@ -305,11 +311,6 @@
             $sfnt_offset = self::SFNT_HEADER_SIZE + (
                 $table_count * self::SFNT_ENTRY_SIZE
             );
-
-            if ($woff_flavor === self::SFNT_FLAVOR_TTCF)
-                throw new \UnexpectedValueException(
-                    "WOFF2 export of font collections is not supported."
-                );
 
             if (empty($sfnt_tables))
                 throw new \LengthException(
