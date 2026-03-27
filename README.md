@@ -8,6 +8,11 @@ sfnt2woff is a PHP class for converting OTF/TTF files to WOFF 1.0 and 2.0.
 * ZLIB extension for WOFF 1.0 export
 * [Brotli extension](https://github.com/kjdev/php-ext-brotli) for WOFF 2.0 export
 
+## Limitations
+
+* TrueType Font Collection files (`.ttc`/`.ttfc`) are not supported.
+* WOFF 2.0 export uses a null transformation: table data is not optimized.
+
 ## Usage
 
 Convert a font to WOFF 1.0:
