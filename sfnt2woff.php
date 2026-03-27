@@ -10,6 +10,7 @@
         const SFNT_FLAVOR_0100   = 0x00010000;
         const SFNT_FLAVOR_OTTO   = 0x4F54544F;
         const SFNT_FLAVOR_TRUE   = 0x74727565;
+        const SFNT_FLAVOR_TYP1   = 0x74797031;
         const SFNT_FLAVOR_TTCF   = 0x74746366;
 
         const SFNT_HEADER_SIZE   = 12;
