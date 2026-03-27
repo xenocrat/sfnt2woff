@@ -294,9 +294,13 @@
         ): string {
             $woff_flavor = $this->sfnt_header["flavor"];
             $woff_tables = array();
-            $sfnt_tables = $this->sort_tables_by_glyf($this->sfnt_tables);
-            $table_count = count($sfnt_tables);
             $woff_tables_orig = "";
+
+            $sfnt_tables = $this->sort_tables_by_glyf(
+                $this->sfnt_tables
+            );
+
+            $table_count = count($sfnt_tables);
 
             $sfnt_offset = self::SFNT_HEADER_SIZE + (
                 $table_count * self::SFNT_ENTRY_SIZE
@@ -672,7 +676,7 @@
 
             return array_merge(
                 $tables_glyf_loca,
-                $tables_other_tag
+                $this->sort_tables_by_offset($tables_other_tag)
             );
         }
 
@@ -713,7 +717,7 @@
 
             foreach ($tables as $table)
                 $data.= pack(
-                    "A4N1N1N1H8",
+                    "A4N1N1N1N1",
                     $table["tag"],
                     $table["offset"],
                     $table["compLength"],
