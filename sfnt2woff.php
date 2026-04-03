@@ -6,6 +6,7 @@
         const VERSION_MINOR      = 0;
         const VERSION_PATCH      = 0;
         const WOFF_RESERVED      = 0;
+        const OFFSET32_SIZE      = 4;
 
         const SFNT_FLAVOR_0100   = 0x00010000;
         const SFNT_FLAVOR_OTTO   = 0x4F54544F;
@@ -15,6 +16,7 @@
 
         const SFNT_HEADER_SIZE   = 12;
         const SFNT_ENTRY_SIZE    = 16;
+        const TTFC_HEADER_SIZE   = 12;
 
         const WOFF1_SIGNATURE    = 0x774F4646;
         const WOFF1_HEADER_SIZE  = 44;
@@ -93,7 +95,8 @@
         private $version_minor   = self::VERSION_MINOR;
         private $sfnt_header     = array();
         private $sfnt_tables     = array();
-        private $woff_tables     = array();
+        private $ttfc_header     = array();
+        private $ttfc_tables     = array();
         private $woff_meta       = array();
         private $woff_priv       = array();
 
@@ -108,7 +111,6 @@
 
             $sfnt_length = strlen($sfnt);
             $sfnt_tables = array();
-            $woff_tables = array();
 
             if (self::SFNT_HEADER_SIZE > $sfnt_length)
                 throw new \RangeException(
@@ -125,80 +127,166 @@
 
             if ($sfnt_flavor === self::SFNT_FLAVOR_TTCF)
                 throw new \UnexpectedValueException(
-                    "TrueType Font Collection files are not supported."
+                    "Use sfnt2woff::ttfc_import for TTFC data."
                 );
 
-            for ($i = 0; $i < $table_count; $i++) {
+            $offset = self::SFNT_HEADER_SIZE;
 
-                $offset = self::SFNT_HEADER_SIZE + (
-                    $i * self::SFNT_ENTRY_SIZE
-                );
+            for ($t = 0; $t < $table_count; $t++) {
+                $need_length = $offset + self::SFNT_ENTRY_SIZE;
 
-                $target = $offset + self::SFNT_ENTRY_SIZE;
-
-                if ($target > $sfnt_length)
+                if ($need_length > $sfnt_length)
                     throw new \LengthException(
                         "File ended unexpectedly."
                     );
 
-                $sfnt_tables[$i] = unpack(
+                $sfnt_tables[$t] = unpack(
                     "A4tag/N1checksum/N1offset/N1length",
                     $sfnt,
                     $offset
                 );
 
-                $target = (
-                    $sfnt_tables[$i]["offset"] +
-                    $sfnt_tables[$i]["length"]
+                $need_length = (
+                    $sfnt_tables[$t]["offset"] +
+                    $sfnt_tables[$t]["length"]
                 );
 
-                if ($target > $sfnt_length)
+                if ($need_length > $sfnt_length)
                     throw new \LengthException(
                         "File ended unexpectedly."
                     );
 
-                $sfnt_tables[$i]["tableData"] = substr(
+                $sfnt_tables[$t]["tableData"] = substr(
                     $sfnt,
-                    $sfnt_tables[$i]["offset"],
-                    $sfnt_tables[$i]["length"]
+                    $sfnt_tables[$t]["offset"],
+                    $sfnt_tables[$t]["length"]
                 );
-            }
 
-            if ($verify_checksums) {
-                foreach ($sfnt_tables as $table) {
-                    if ($table["tag"] == "head")
-                        continue;
-
-                    $this->verify_checksum(
-                        $table["checksum"],
-                        $table["tableData"]
-                    );
+                if ($verify_checksums) {
+                    if ($sfnt_tables[$t]["tag"] != "head")
+                        $this->verify_checksum(
+                            $sfnt_tables[$t]["checksum"],
+                            $sfnt_tables[$t]["tableData"]
+                        );
                 }
+
+                $offset+= self::SFNT_ENTRY_SIZE;
             }
 
             $this->sfnt_header = $sfnt_header;
             $this->sfnt_tables = $sfnt_tables;
-            $this->woff_tables = $woff_tables;
+        }
+
+        public function ttfc_import(
+            $ttfc,
+            $verify_checksums = true
+        ): void {
+            if (!is_string($ttfc))
+                throw new \InvalidArgumentException(
+                    "File must be supplied as a string."
+                );
+
+            $ttfc_length = strlen($ttfc);
+            $ttfc_tables = array();
+
+            if (self::TTFC_HEADER_SIZE > $ttfc_length)
+                throw new \RangeException(
+                    "File does not contain TTFC data."
+                );
+
+            $ttfc_header = unpack(
+                "N1flavor/n1versionMajor/n1versionMinor/N1numFonts",
+                $ttfc
+            );
+
+            $sfnt_flavor = $ttfc_header["flavor"];
+            $fonts_count = $ttfc_header["numFonts"];
+
+            if ($sfnt_flavor !== self::SFNT_FLAVOR_TTCF)
+                throw new \UnexpectedValueException(
+                    "Use sfnt2woff::sfnt_import for SFNT data."
+                );
+
+            $f_offset = self::TTFC_HEADER_SIZE;
+
+            for ($f = 0; $f < $fonts_count; $f++) {
+                $need_length = $f_offset + self::OFFSET32_SIZE;
+
+                if ($need_length > $ttfc_length)
+                    throw new \LengthException(
+                        "File ended unexpectedly."
+                    );
+
+                $t_offset = unpack("N1offset", $ttfc, $f_offset)["offset"];
+                $need_length = $t_offset + self::SFNT_HEADER_SIZE;
+
+                if ($need_length > $ttfc_length)
+                    throw new \LengthException(
+                        "File ended unexpectedly."
+                    );
+
+                $ttfc_tables[$f] = unpack(
+                    "N1flavor/n1numTables",
+                    $ttfc,
+                    $t_offset
+                );
+
+                $t_offset+= self::SFNT_HEADER_SIZE;
+                $table_count = $ttfc_tables[$f]["numTables"];
+
+                for ($t = 0; $t < $table_count; $t++) {
+                    $need_length = $t_offset + self::SFNT_ENTRY_SIZE;
+
+                    if ($need_length > $ttfc_length)
+                        throw new \LengthException(
+                            "File ended unexpectedly."
+                        );
+
+                    $ttfc_tables[$f][0][$t] = unpack(
+                        "A4tag/N1checksum/N1offset/N1length",
+                        $ttfc,
+                        $t_offset
+                    );
+
+                    $need_length = (
+                        $ttfc_tables[$f][0][$t]["offset"] +
+                        $ttfc_tables[$f][0][$t]["length"]
+                    );
+
+                    if ($need_length > $ttfc_length)
+                        throw new \LengthException(
+                            "File ended unexpectedly."
+                        );
+
+                    $ttfc_tables[$f][0][$t]["tableData"] = substr(
+                        $ttfc,
+                        $ttfc_tables[$f][0][$t]["offset"],
+                        $ttfc_tables[$f][0][$t]["length"]
+                    );
+
+                    if ($verify_checksums) {
+                        if ($ttfc_tables[$f][0][$t]["tag"] != "head")
+                            $this->verify_checksum(
+                                $ttfc_tables[$f][0][$t]["checksum"],
+                                $ttfc_tables[$f][0][$t]["tableData"]
+                            );
+                    }
+
+                    $t_offset+= self::SFNT_ENTRY_SIZE;
+                }
+
+                $f_offset+= self::OFFSET32_SIZE;
+            }
+
+            $this->ttfc_header = $ttfc_header;
+            $this->ttfc_tables = $ttfc_tables;
         }
 
         public function woff1_export(
             $compression_level = -1
         ): string {
-            $woff_flavor = $this->sfnt_header["flavor"];
-            $woff_tables = array();
-
             $sfnt_tables = $this->sort_tables_by_offset(
                 $this->sfnt_tables
-            );
-
-            $table_count = count($sfnt_tables);
-
-            $woff_offset = self::WOFF1_HEADER_SIZE + (
-                $table_count * self::WOFF1_ENTRY_SIZE
-            );
-
-            $sfnt_offset = self::SFNT_HEADER_SIZE + (
-                $table_count * self::SFNT_ENTRY_SIZE
             );
 
             if (empty($sfnt_tables))
@@ -206,8 +294,22 @@
                     "No SFNT data to export."
                 );
 
-            for ($i = 0; $i < $table_count; $i++) {
-                $sfnt_table_orig = $sfnt_tables[$i]["tableData"];
+            $woff_flavor = $this->sfnt_header["flavor"];
+            $woff_tables = array();
+            $table_count = count($sfnt_tables);
+
+            $woff_offset = (
+                self::WOFF1_HEADER_SIZE +
+                ($table_count * self::WOFF1_ENTRY_SIZE)
+            );
+
+            $sfnt_offset = (
+                self::SFNT_HEADER_SIZE +
+                ($table_count * self::SFNT_ENTRY_SIZE)
+            );
+
+            for ($t = 0; $t < $table_count; $t++) {
+                $sfnt_table_orig = $sfnt_tables[$t]["tableData"];
 
                 $sfnt_table_comp = $this->gz_compress(
                     $sfnt_table_orig,
@@ -217,17 +319,17 @@
                 if (strlen($sfnt_table_comp) >= strlen($sfnt_table_orig))
                     $sfnt_table_comp = $sfnt_table_orig;
 
-                $woff_tables[$i] = array(
-                    "tag"          => $sfnt_tables[$i]["tag"],
+                $woff_tables[$t] = array(
+                    "tag"          => $sfnt_tables[$t]["tag"],
                     "offset"       => $woff_offset,
                     "compLength"   => strlen($sfnt_table_comp),
                     "origLength"   => strlen($sfnt_table_orig),
-                    "origChecksum" => $sfnt_tables[$i]["checksum"],
+                    "origChecksum" => $sfnt_tables[$t]["checksum"],
                     "tableData"    => $this->pad_data($sfnt_table_comp)
                 );
 
                 $woff_offset+= strlen(
-                    $woff_tables[$i]["tableData"]
+                    $woff_tables[$t]["tableData"]
                 );
 
                 $sfnt_offset+= strlen(
@@ -299,18 +401,8 @@
         public function woff2_export(
             $compression_level = -1
         ): string {
-            $woff_flavor = $this->sfnt_header["flavor"];
-            $woff_tables = array();
-            $woff_tables_orig = "";
-
             $sfnt_tables = $this->sort_tables_by_glyf(
                 $this->sfnt_tables
-            );
-
-            $table_count = count($sfnt_tables);
-
-            $sfnt_offset = self::SFNT_HEADER_SIZE + (
-                $table_count * self::SFNT_ENTRY_SIZE
             );
 
             if (empty($sfnt_tables))
@@ -318,14 +410,24 @@
                     "No SFNT data to export."
                 );
 
-            for ($i = 0; $i < $table_count; $i++) {
-                $sfnt_table_orig = $sfnt_tables[$i]["tableData"];
+            $woff_flavor = $this->sfnt_header["flavor"];
+            $woff_tables = array();
+            $woff_tables_orig = "";
+            $table_count = count($sfnt_tables);
+
+            $sfnt_offset = (
+                self::SFNT_HEADER_SIZE +
+                ($table_count * self::SFNT_ENTRY_SIZE)
+            );
+
+            for ($t = 0; $t < $table_count; $t++) {
+                $sfnt_table_orig = $sfnt_tables[$t]["tableData"];
                 $woff_tables_orig.= $sfnt_table_orig;
 
-                $woff_tables[$i] = array(
-                    "tag"          => $sfnt_tables[$i]["tag"],
+                $woff_tables[$t] = array(
+                    "tag"          => $sfnt_tables[$t]["tag"],
                     "origLength"   => strlen($sfnt_table_orig),
-                    "origChecksum" => $sfnt_tables[$i]["checksum"],
+                    "origChecksum" => $sfnt_tables[$t]["checksum"],
                 );
 
                 $sfnt_offset+= strlen(
