@@ -16,8 +16,8 @@
 
         const SFNT_HEADER_SIZE   = 12;
         const SFNT_ENTRY_SIZE    = 16;
-        const TTFC_HEADER_SIZE   = 12;
-        const TTFC_HEADER_EXTRA  = 12;
+        const TTCF_HEADER_SIZE   = 12;
+        const TTCF_HEADER_EXTRA  = 12;
 
         const WOFF1_SIGNATURE    = 0x774F4646;
         const WOFF1_HEADER_SIZE  = 44;
@@ -96,8 +96,8 @@
         private $version_minor   = self::VERSION_MINOR;
         private $sfnt_header     = array();
         private $sfnt_tables     = array();
-        private $ttfc_header     = array();
-        private $ttfc_tables     = array();
+        private $otfc_header     = array();
+        private $otfc_tables     = array();
         private $woff_meta       = array();
         private $woff_priv       = array();
 
@@ -128,7 +128,7 @@
 
             if ($sfnt_flavor === self::SFNT_FLAVOR_TTCF)
                 throw new \UnexpectedValueException(
-                    "Use sfnt2woff::ttfc_import for TTFC data."
+                    "Use sfnt2woff::otfc_import for TTC/OTC data."
                 );
 
             $offset = self::SFNT_HEADER_SIZE;
@@ -178,98 +178,98 @@
             $this->sfnt_tables = $sfnt_tables;
         }
 
-        public function ttfc_import(
-            $ttfc,
+        public function otfc_import(
+            $otfc,
             $verify_checksums = true
         ): void {
-            if (!is_string($ttfc))
+            if (!is_string($otfc))
                 throw new \InvalidArgumentException(
                     "File must be supplied as a string."
                 );
 
-            $ttfc_length = strlen($ttfc);
-            $ttfc_tables = array();
+            $otfc_length = strlen($otfc);
+            $otfc_tables = array();
 
-            if (self::TTFC_HEADER_SIZE > $ttfc_length)
+            if (self::TTCF_HEADER_SIZE > $otfc_length)
                 throw new \RangeException(
-                    "File does not contain TTFC data."
+                    "File does not contain otfc data."
                 );
 
-            $ttfc_header = unpack(
+            $otfc_header = unpack(
                 "N1flavor/n1versionMajor/n1versionMinor/N1numFonts",
-                $ttfc
+                $otfc
             );
 
-            $sfnt_flavor = $ttfc_header["flavor"];
-            $fonts_count = $ttfc_header["numFonts"];
+            $sfnt_flavor = $otfc_header["flavor"];
+            $fonts_count = $otfc_header["numFonts"];
 
             if ($sfnt_flavor !== self::SFNT_FLAVOR_TTCF)
                 throw new \UnexpectedValueException(
                     "Use sfnt2woff::sfnt_import for SFNT data."
                 );
 
-            $f_offset = self::TTFC_HEADER_SIZE;
+            $f_offset = self::TTCF_HEADER_SIZE;
 
             for ($f = 0; $f < $fonts_count; $f++) {
                 $need_length = $f_offset + self::OFFSET32_SIZE;
 
-                if ($need_length > $ttfc_length)
+                if ($need_length > $otfc_length)
                     throw new \LengthException(
                         "File ended unexpectedly."
                     );
 
-                $t_offset = unpack("N1offset", $ttfc, $f_offset)["offset"];
+                $t_offset = unpack("N1offset", $otfc, $f_offset)["offset"];
                 $need_length = $t_offset + self::SFNT_HEADER_SIZE;
 
-                if ($need_length > $ttfc_length)
+                if ($need_length > $otfc_length)
                     throw new \LengthException(
                         "File ended unexpectedly."
                     );
 
-                $ttfc_tables[$f] = unpack(
+                $otfc_tables[$f] = unpack(
                     "N1flavor/n1numTables",
-                    $ttfc,
+                    $otfc,
                     $t_offset
                 );
 
                 $t_offset+= self::SFNT_HEADER_SIZE;
-                $table_count = $ttfc_tables[$f]["numTables"];
+                $table_count = $otfc_tables[$f]["numTables"];
 
                 for ($t = 0; $t < $table_count; $t++) {
                     $need_length = $t_offset + self::SFNT_ENTRY_SIZE;
 
-                    if ($need_length > $ttfc_length)
+                    if ($need_length > $otfc_length)
                         throw new \LengthException(
                             "File ended unexpectedly."
                         );
 
-                    $ttfc_tables[$f][0][$t] = unpack(
+                    $otfc_tables[$f][0][$t] = unpack(
                         "A4tag/N1checksum/N1offset/N1length",
-                        $ttfc,
+                        $otfc,
                         $t_offset
                     );
 
                     $need_length = (
-                        $ttfc_tables[$f][0][$t]["offset"] +
-                        $ttfc_tables[$f][0][$t]["length"]
+                        $otfc_tables[$f][0][$t]["offset"] +
+                        $otfc_tables[$f][0][$t]["length"]
                     );
 
-                    if ($need_length > $ttfc_length)
+                    if ($need_length > $otfc_length)
                         throw new \LengthException(
                             "File ended unexpectedly."
                         );
 
-                    $ttfc_tables[$f][0][$t]["tableData"] = substr(
-                        $ttfc,
-                        $ttfc_tables[$f][0][$t]["offset"],
-                        $ttfc_tables[$f][0][$t]["length"]
+                    $otfc_tables[$f][0][$t]["tableData"] = substr(
+                        $otfc,
+                        $otfc_tables[$f][0][$t]["offset"],
+                        $otfc_tables[$f][0][$t]["length"]
                     );
 
                     if ($verify_checksums) {
-                        if ($ttfc_tables[$f][0][$t]["tag"] != "head")
+                        if ($otfc_tables[$f][0][$t]["tag"] != "head")
                             $this->verify_checksum(
-                                $ttfc_tables[$f][0][$t]["checksum"],
-                                $ttfc_tables[$f][0][$t]["tableData"]
+                                $otfc_tables[$f][0][$t]["checksum"],
+                                $otfc_tables[$f][0][$t]["tableData"]
                             );
                     }
 
@@ -279,8 +279,8 @@
                 $f_offset+= self::OFFSET32_SIZE;
             }
 
-            $this->ttfc_header = $ttfc_header;
-            $this->ttfc_tables = $ttfc_tables;
+            $this->otfc_header = $otfc_header;
+            $this->otfc_tables = $otfc_tables;
         }
 
         public function woff1_export(
@@ -519,73 +519,73 @@
         public function woffc_export(
             $compression_level = -1
         ): string {
-            if (empty($this->ttfc_tables))
+            if (empty($this->otfc_tables))
                 throw new \LengthException(
-                    "No TTFC data to export."
+                    "No otfc data to export."
                 );
 
-            $ttfc_ver_major = $this->ttfc_header["versionMajor"];
-            $ttfc_ver_minor = $this->ttfc_header["versionMinor"];
+            $otfc_ver_major = $this->otfc_header["versionMajor"];
+            $otfc_ver_minor = $this->otfc_header["versionMinor"];
 
             $woff_flavor = self::SFNT_FLAVOR_TTCF;
             $woff_tables = array();
             $woff_tables_orig = "";
-            $fonts_count = count($this->ttfc_tables);
+            $fonts_count = count($this->otfc_tables);
             $table_total = 0;
             $font_indices = array();
             $tables_index = array();
 
             for ($f = 0; $f < $fonts_count; $f++)
-                $table_total+= count($this->ttfc_tables[$f][0]);
+                $table_total+= count($this->otfc_tables[$f][0]);
 
-            $ttfc_offset = (
-                self::TTFC_HEADER_SIZE +
+            $otfc_offset = (
+                self::TTCF_HEADER_SIZE +
                 ($fonts_count * self::OFFSET32_SIZE) +
                 ($fonts_count * self::SFNT_HEADER_SIZE) +
                 ($table_total * self::SFNT_ENTRY_SIZE)
             );
 
-            if ($ttfc_ver_major > 1)
-                $ttfc_offset+= self::TTFC_HEADER_EXTRA;
+            if ($otfc_ver_major > 1)
+                $otfc_offset+= self::TTCF_HEADER_EXTRA;
 
             for ($f = 0; $f < $fonts_count; $f++) {
                 $font_indices[$f] = array(
-                    "flavor" => $this->ttfc_tables[$f]["flavor"],
-                    "numTables" => $this->ttfc_tables[$f]["numTables"]
+                    "flavor" => $this->otfc_tables[$f]["flavor"],
+                    "numTables" => $this->otfc_tables[$f]["numTables"]
                 );
 
-                $ttfc_tables = $this->sort_tables_by_glyf(
-                    $this->ttfc_tables[$f][0]
+                $otfc_tables = $this->sort_tables_by_glyf(
+                    $this->otfc_tables[$f][0]
                 );
 
-                $table_count = count($ttfc_tables);
+                $table_count = count($otfc_tables);
                 $glyf_index = -2;
                 $loca_index = -1;
 
                 for ($t = 0; $t < $table_count; $t++) {
-                    $offset_key = $ttfc_tables[$t]["offset"];
+                    $offset_key = $otfc_tables[$t]["offset"];
 
                     if (!isset($tables_index[$offset_key])) {
-                        $ttfc_table_orig = $ttfc_tables[$t]["tableData"];
-                        $woff_tables_orig.= $ttfc_table_orig;
+                        $otfc_table_orig = $otfc_tables[$t]["tableData"];
+                        $woff_tables_orig.= $otfc_table_orig;
 
                         $woff_tables[] = array(
-                            "tag"          => $ttfc_tables[$t]["tag"],
-                            "origLength"   => strlen($ttfc_table_orig),
-                            "origChecksum" => $ttfc_tables[$t]["checksum"],
+                            "tag"          => $otfc_tables[$t]["tag"],
+                            "origLength"   => strlen($otfc_table_orig),
+                            "origChecksum" => $otfc_tables[$t]["checksum"],
                         );
 
-                        $ttfc_offset+= $this->pad_offset(
-                            strlen($ttfc_table_orig)
+                        $otfc_offset+= $this->pad_offset(
+                            strlen($otfc_table_orig)
                         );
 
                         $tables_index[$offset_key] = count($woff_tables) - 1;
                     }
 
-                    if ($ttfc_tables[$t]["tag"] == "glyf")
+                    if ($otfc_tables[$t]["tag"] == "glyf")
                         $glyf_index = $tables_index[$offset_key];
 
-                    if ($ttfc_tables[$t]["tag"] == "loca")
+                    if ($otfc_tables[$t]["tag"] == "loca")
                         $loca_index = $tables_index[$offset_key];
 
                     $font_indices[$f][0][] = $tables_index[$offset_key];
@@ -602,8 +602,8 @@
             );
 
             $woff_collection = $this->create_woff2_collection(
-                $ttfc_ver_major,
-                $ttfc_ver_minor,
+                $otfc_ver_major,
+                $otfc_ver_minor,
                 $fonts_count,
                 $font_indices
             );
@@ -659,7 +659,7 @@
                 $woff_flavor,
                 $woff_offset,
                 $table_count,
-                $ttfc_offset,
+                $otfc_offset,
                 $woff_tables_comp_length,
                 $woff_meta_offset,
                 $woff_meta_length,
