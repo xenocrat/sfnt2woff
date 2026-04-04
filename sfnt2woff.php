@@ -17,6 +17,7 @@
         const SFNT_HEADER_SIZE   = 12;
         const SFNT_ENTRY_SIZE    = 16;
         const TTFC_HEADER_SIZE   = 12;
+        const TTFC_HEADER_EXTRA  = 12;
 
         const WOFF1_SIGNATURE    = 0x774F4646;
         const WOFF1_HEADER_SIZE  = 44;
@@ -285,14 +286,14 @@
         public function woff1_export(
             $compression_level = -1
         ): string {
-            $sfnt_tables = $this->sort_tables_by_offset(
-                $this->sfnt_tables
-            );
-
-            if (empty($sfnt_tables))
+            if (empty($this->sfnt_tables))
                 throw new \LengthException(
                     "No SFNT data to export."
                 );
+
+            $sfnt_tables = $this->sort_tables_by_offset(
+                $this->sfnt_tables
+            );
 
             $woff_flavor = $this->sfnt_header["flavor"];
             $woff_tables = array();
@@ -319,7 +320,7 @@
                 if (strlen($sfnt_table_comp) >= strlen($sfnt_table_orig))
                     $sfnt_table_comp = $sfnt_table_orig;
 
-                $woff_tables[$t] = array(
+                $woff_tables[] = array(
                     "tag"          => $sfnt_tables[$t]["tag"],
                     "offset"       => $woff_offset,
                     "compLength"   => strlen($sfnt_table_comp),
@@ -332,8 +333,8 @@
                     $woff_tables[$t]["tableData"]
                 );
 
-                $sfnt_offset+= strlen(
-                    $this->pad_data($sfnt_table_orig)
+                $sfnt_offset+= $this->pad_offset(
+                    strlen($sfnt_table_orig)
                 );
             }
 
@@ -401,14 +402,14 @@
         public function woff2_export(
             $compression_level = -1
         ): string {
-            $sfnt_tables = $this->sort_tables_by_glyf(
-                $this->sfnt_tables
-            );
-
-            if (empty($sfnt_tables))
+            if (empty($this->sfnt_tables))
                 throw new \LengthException(
                     "No SFNT data to export."
                 );
+
+            $sfnt_tables = $this->sort_tables_by_glyf(
+                $this->sfnt_tables
+            );
 
             $woff_flavor = $this->sfnt_header["flavor"];
             $woff_tables = array();
@@ -424,25 +425,25 @@
                 $sfnt_table_orig = $sfnt_tables[$t]["tableData"];
                 $woff_tables_orig.= $sfnt_table_orig;
 
-                $woff_tables[$t] = array(
+                $woff_tables[] = array(
                     "tag"          => $sfnt_tables[$t]["tag"],
                     "origLength"   => strlen($sfnt_table_orig),
                     "origChecksum" => $sfnt_tables[$t]["checksum"],
                 );
 
-                $sfnt_offset+= strlen(
-                    $this->pad_data($sfnt_table_orig)
+                $sfnt_offset+= $this->pad_offset(
+                    strlen($sfnt_table_orig)
                 );
             }
+
+            $woff_directory = $this->create_woff2_directory(
+                $woff_tables
+            );
 
             $woff_tables_comp = $this->br_compress(
                 $woff_tables_orig,
                 $compression_level,
                 BROTLI_FONT
-            );
-
-            $woff_directory = $this->create_woff2_directory(
-                $woff_tables
             );
 
             $woff_directory_length = strlen($woff_directory);
@@ -497,7 +498,181 @@
                 $woff_priv_length
             );
 
-            $woff_export.= ($woff_directory.$woff_tables_comp);
+            $woff_export.= (
+                $woff_directory.
+                $woff_tables_comp
+            );
+
+            if (isset($woff_meta_comp)) {
+                $woff_export = $this->pad_data($woff_export);
+                $woff_export.= $woff_meta_comp;
+            }
+
+            if (isset($woff_priv_data)) {
+                $woff_export = $this->pad_data($woff_export);
+                $woff_export.= $woff_priv_data;
+            }
+
+            return $woff_export;
+        }
+
+        public function woffc_export(
+            $compression_level = -1
+        ): string {
+            if (empty($this->ttfc_tables))
+                throw new \LengthException(
+                    "No TTFC data to export."
+                );
+
+            $ttfc_ver_major = $this->ttfc_header["versionMajor"];
+            $ttfc_ver_minor = $this->ttfc_header["versionMinor"];
+
+            $woff_flavor = self::SFNT_FLAVOR_TTCF;
+            $woff_tables = array();
+            $woff_tables_orig = "";
+            $fonts_count = count($this->ttfc_tables);
+            $table_total = 0;
+            $font_indices = array();
+            $tables_index = array();
+
+            for ($f = 0; $f < $fonts_count; $f++)
+                $table_total+= count($this->ttfc_tables[$f][0]);
+
+            $ttfc_offset = (
+                self::TTFC_HEADER_SIZE +
+                ($fonts_count * self::OFFSET32_SIZE) +
+                ($fonts_count * self::SFNT_HEADER_SIZE) +
+                ($table_total * self::SFNT_ENTRY_SIZE)
+            );
+
+            if ($ttfc_ver_major > 1)
+                $ttfc_offset+= self::TTFC_HEADER_EXTRA;
+
+            for ($f = 0; $f < $fonts_count; $f++) {
+                $font_indices[$f] = array(
+                    "flavor" => $this->ttfc_tables[$f]["flavor"],
+                    "numTables" => $this->ttfc_tables[$f]["numTables"]
+                );
+
+                $ttfc_tables = $this->sort_tables_by_glyf(
+                    $this->ttfc_tables[$f][0]
+                );
+
+                $table_count = count($ttfc_tables);
+                $glyf_index = -2;
+                $loca_index = -1;
+
+                for ($t = 0; $t < $table_count; $t++) {
+                    $offset_key = $ttfc_tables[$t]["offset"];
+
+                    if (!isset($tables_index[$offset_key])) {
+                        $ttfc_table_orig = $ttfc_tables[$t]["tableData"];
+                        $woff_tables_orig.= $ttfc_table_orig;
+
+                        $woff_tables[] = array(
+                            "tag"          => $ttfc_tables[$t]["tag"],
+                            "origLength"   => strlen($ttfc_table_orig),
+                            "origChecksum" => $ttfc_tables[$t]["checksum"],
+                        );
+
+                        $ttfc_offset+= $this->pad_offset(
+                            strlen($ttfc_table_orig)
+                        );
+
+                        $tables_index[$offset_key] = count($woff_tables) - 1;
+                    }
+
+                    if ($ttfc_tables[$t]["tag"] == "glyf")
+                        $glyf_index = $tables_index[$offset_key];
+
+                    if ($ttfc_tables[$t]["tag"] == "loca")
+                        $loca_index = $tables_index[$offset_key];
+
+                    $font_indices[$f][0][] = $tables_index[$offset_key];
+                }
+
+                if ($glyf_index + 1 != $loca_index)
+                    throw new \UnexpectedValueException(
+                        "Shared glyf and loca tables must be adjacent."
+                    );
+            }
+
+            $woff_directory = $this->create_woff2_directory(
+                $woff_tables
+            );
+
+            $woff_collection = $this->create_woff2_collection(
+                $ttfc_ver_major,
+                $ttfc_ver_minor,
+                $fonts_count,
+                $font_indices
+            );
+
+            $woff_tables_comp = $this->br_compress(
+                $woff_tables_orig,
+                $compression_level,
+                BROTLI_FONT
+            );
+
+            $woff_directory_length = strlen($woff_directory);
+            $woff_collection_length = strlen($woff_collection);
+            $woff_tables_comp_length = strlen($woff_tables_comp);
+
+            $woff_offset = (
+                self::WOFF2_HEADER_SIZE +
+                $woff_directory_length +
+                $woff_collection_length +
+                $woff_tables_comp_length
+            );
+
+            $woff_meta_offset      = 0;
+            $woff_meta_length      = 0;
+            $woff_meta_orig_length = 0;
+            $woff_priv_offset      = 0;
+            $woff_priv_length      = 0;
+            $woff_meta_comp        = null;
+            $woff_priv_data        = null;
+
+            if (!empty($this->woff_meta)) {
+                $woff_meta_orig = $this->woff_meta["data"];
+
+                $woff_meta_comp = $this->br_compress(
+                    $woff_meta_orig,
+                    $compression_level,
+                    BROTLI_TEXT
+                );
+
+                $woff_meta_offset = $this->pad_offset($woff_offset);
+                $woff_meta_length = strlen($woff_meta_comp);
+                $woff_meta_orig_length = strlen($woff_meta_orig);
+                $woff_offset = $woff_meta_offset + $woff_meta_length;
+            }
+
+            if (!empty($this->woff_priv)) {
+                $woff_priv_data = $this->woff_priv["data"];
+                $woff_priv_offset = $this->pad_offset($woff_offset);
+                $woff_priv_length = strlen($woff_priv_data);
+                $woff_offset = $woff_priv_offset + $woff_priv_length;
+            }
+
+            $woff_export = $this->create_woff2_header(
+                $woff_flavor,
+                $woff_offset,
+                $table_count,
+                $ttfc_offset,
+                $woff_tables_comp_length,
+                $woff_meta_offset,
+                $woff_meta_length,
+                $woff_meta_orig_length,
+                $woff_priv_offset,
+                $woff_priv_length
+            );
+
+            $woff_export.= (
+                $woff_directory.
+                $woff_collection.
+                $woff_tables_comp
+            );
 
             if (isset($woff_meta_comp)) {
                 $woff_export = $this->pad_data($woff_export);
@@ -737,6 +912,28 @@
             return $num;
         }
 
+        private function u16_var_encode(
+            $int
+        ): string {
+            $num = "";
+
+            if ($int < 253) {
+                $num.= chr($int);
+            } elseif ($int < 506) {
+                $num.= chr(255);
+                $num.= chr($int - 253);
+            } elseif ($int < 762) {
+                $num.= chr(254);
+                $num.= chr($int - 506);
+            } else {
+                $num.= chr(253);
+                $num.= chr($int >> 8);
+                $num.= chr($int & 0xff);
+            }
+
+            return $num;
+        }
+
         private function sort_tables_by_tag(
             $tables
         ): array {
@@ -769,8 +966,11 @@
             foreach ($tables as $table) {
                 switch ($table["tag"]) {
                     case "glyf":
+                        $tables_glyf_loca[0] = $table;
+                        break;
+
                     case "loca":
-                        $tables_glyf_loca[] = $table;
+                        $tables_glyf_loca[1] = $table;
                         break;
 
                     default:
@@ -886,6 +1086,31 @@
                 }
 
                 $data.= $this->base128_encode($table["origLength"]);
+            }
+
+            return $data;
+        }
+
+        private function create_woff2_collection(
+            $version_major,
+            $version_minor,
+            $fonts_count,
+            $font_indices
+        ): string {
+            $data = pack(
+                "n1n1",
+                $version_major,
+                $version_minor
+            );
+
+            $data.= $this->u16_var_encode($fonts_count);
+
+            foreach ($font_indices as $font) {
+                $data.= $this->u16_var_encode($font["numTables"]);
+                $data.= pack("N1", $font["flavor"]);
+
+                foreach ($font[0] as $index)
+                    $data.= $this->u16_var_encode($index);
             }
 
             return $data;
