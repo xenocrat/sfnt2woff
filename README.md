@@ -10,8 +10,7 @@ sfnt2woff is a PHP class for converting OTF/TTF files to WOFF 1.0 and 2.0.
 
 ## Limitations
 
-* TrueType Font Collection files (`.ttc`/`.ttfc`) are not supported.
-* WOFF 2.0 export uses a null transformation: table data is not optimized.
+WOFF 2.0 export uses a null transformation: table data is not optimized.
 
 ## Usage
 
@@ -48,13 +47,36 @@ public sfnt2woff::sfnt_import(
 ): void
 ```
 
-This function imports SFNT data from a TTF or OTF font source.
+Imports SFNT data from a TTF or OTF font source.
 
 #### Parameters
 
 * _sfnt_
 
   A complete TTF or OTF file as a string of data.
+
+* _verify\_checksums_
+
+  Whether or not to verify the table data checksums on import.
+
+### `otfc_import`
+
+#### Description
+
+``` php
+public sfnt2woff::otfc_import(
+    string $otfc,
+    bool $verify_checksums = true
+): void
+```
+
+Imports TTC or OTC data from a TrueType or OpenType font collection.
+
+#### Parameters
+
+* _otfc_
+
+  A complete TTC or OTC file as a string of data.
 
 * _verify\_checksums_
 
@@ -70,7 +92,7 @@ public sfnt2woff::woff1_export(
 ): string
 ```
 
-This function exports SFNT data in WOFF 1.0 format.
+Exports SFNT data in WOFF 1.0 format.
 
 #### Parameters
 
@@ -92,7 +114,29 @@ public sfnt2woff::woff2_export(
 ): string
 ```
 
-This function exports SFNT data in WOFF 2.0 format.
+Exports SFNT data in WOFF 2.0 format.
+
+#### Parameters
+
+* _compression\_level_
+
+  The compression level, from 0 (minimum) to 11 (maximum).
+
+#### Return Values
+
+Returns a complete WOFF 2.0 file as a string of data.
+
+### `woffc_export`
+
+#### Description
+
+``` php
+public sfnt2woff::woffc_export(
+    int $compression_level = -1
+): string
+```
+
+Exports TTC or OTC data in WOFF 2.0 font collection format.
 
 #### Parameters
 
