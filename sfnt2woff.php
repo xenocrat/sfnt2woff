@@ -3,7 +3,7 @@
 
     class sfnt2woff {
         const VERSION_MAJOR     = 4;
-        const VERSION_MINOR     = 0;
+        const VERSION_MINOR     = 1;
         const VERSION_PATCH     = 0;
         const WOFF_RESERVED     = 0;
         const OFFSET32_SIZE     = 4;
