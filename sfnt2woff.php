@@ -411,10 +411,10 @@
                 $this->sfnt_tables
             );
 
-            $woff_flavor = $this->sfnt_header["flavor"];
-            $woff_tables = array();
+            $woff_flavor      = $this->sfnt_header["flavor"];
+            $woff_tables      = array();
             $woff_tables_orig = "";
-            $table_count = count($sfnt_tables);
+            $table_count      = count($sfnt_tables);
 
             $sfnt_offset = (
                 self::SFNT_HEADER_SIZE +
@@ -527,14 +527,14 @@
             $otfc_ver_major = $this->otfc_header["versionMajor"];
             $otfc_ver_minor = $this->otfc_header["versionMinor"];
 
-            $woff_flavor = self::SFNT_FLAVOR_TTCF;
-            $woff_tables = array();
+            $woff_flavor      = self::SFNT_FLAVOR_TTCF;
+            $woff_tables      = array();
             $woff_tables_orig = "";
-            $fonts_count = count($this->otfc_tables);
-            $table_total = 0;
-            $font_headers = array();
-            $font_indices = array();
-            $tables_index = array();
+            $fonts_count      = count($this->otfc_tables);
+            $table_total      = 0;
+            $font_headers     = array();
+            $font_indices     = array();
+            $tables_index     = array();
 
             for ($f = 0; $f < $fonts_count; $f++)
                 $table_total+= count($this->otfc_tables[$f]["tables"]);
