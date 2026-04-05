@@ -2,31 +2,31 @@
     namespace xenocrat;
 
     class sfnt2woff {
-        const VERSION_MAJOR      = 4;
-        const VERSION_MINOR      = 0;
-        const VERSION_PATCH      = 0;
-        const WOFF_RESERVED      = 0;
-        const OFFSET32_SIZE      = 4;
+        const VERSION_MAJOR     = 4;
+        const VERSION_MINOR     = 0;
+        const VERSION_PATCH     = 0;
+        const WOFF_RESERVED     = 0;
+        const OFFSET32_SIZE     = 4;
 
-        const SFNT_FLAVOR_0100   = 0x00010000;
-        const SFNT_FLAVOR_OTTO   = 0x4F54544F;
-        const SFNT_FLAVOR_TRUE   = 0x74727565;
-        const SFNT_FLAVOR_TYP1   = 0x74797031;
-        const SFNT_FLAVOR_TTCF   = 0x74746366;
+        const SFNT_FLAVOR_0100  = 0x00010000;
+        const SFNT_FLAVOR_OTTO  = 0x4F54544F;
+        const SFNT_FLAVOR_TRUE  = 0x74727565;
+        const SFNT_FLAVOR_TYP1  = 0x74797031;
+        const SFNT_FLAVOR_TTCF  = 0x74746366;
 
-        const SFNT_HEADER_SIZE   = 12;
-        const SFNT_ENTRY_SIZE    = 16;
-        const TTCF_HEADER_SIZE   = 12;
-        const TTCF_HEADER_EXTRA  = 12;
+        const SFNT_HEADER_SIZE  = 12;
+        const SFNT_ENTRY_SIZE   = 16;
+        const TTCF1_HEADER_SIZE = 12;
+        const TTCF2_HEADER_SIZE = 24;
 
-        const WOFF1_SIGNATURE    = 0x774F4646;
-        const WOFF1_HEADER_SIZE  = 44;
-        const WOFF1_ENTRY_SIZE   = 20;
+        const WOFF1_SIGNATURE   = 0x774F4646;
+        const WOFF1_HEADER_SIZE = 44;
+        const WOFF1_ENTRY_SIZE  = 20;
 
-        const WOFF2_SIGNATURE    = 0x774F4632;
-        const WOFF2_HEADER_SIZE  = 48;
+        const WOFF2_SIGNATURE   = 0x774F4632;
+        const WOFF2_HEADER_SIZE = 48;
 
-        const WOFF2_KNOWN_TABLES = array(
+        const WOFF2_KNOWN_TAGS  = array(
             "cmap" => 0,
             "head" => 1,
             "hhea" => 2,
@@ -92,14 +92,14 @@
             "Sill" => 62
         );
 
-        private $version_major   = self::VERSION_MAJOR;
-        private $version_minor   = self::VERSION_MINOR;
-        private $sfnt_header     = array();
-        private $sfnt_tables     = array();
-        private $otfc_header     = array();
-        private $otfc_tables     = array();
-        private $woff_meta       = array();
-        private $woff_priv       = array();
+        private $version_major  = self::VERSION_MAJOR;
+        private $version_minor  = self::VERSION_MINOR;
+        private $sfnt_header    = array();
+        private $sfnt_tables    = array();
+        private $otfc_header    = array();
+        private $otfc_tables    = array();
+        private $woff_meta      = array();
+        private $woff_priv      = array();
 
         public function sfnt_import(
             $sfnt,
@@ -190,7 +190,7 @@
             $otfc_length = strlen($otfc);
             $otfc_tables = array();
 
-            if (self::TTCF_HEADER_SIZE > $otfc_length)
+            if (self::TTCF1_HEADER_SIZE > $otfc_length)
                 throw new \RangeException(
                     "File does not contain otfc data."
                 );
@@ -208,7 +208,7 @@
                     "Use sfnt2woff::sfnt_import for SFNT data."
                 );
 
-            $f_offset = self::TTCF_HEADER_SIZE;
+            $f_offset = self::TTCF1_HEADER_SIZE;
 
             for ($f = 0; $f < $fonts_count; $f++) {
                 $need_length = $f_offset + self::OFFSET32_SIZE;
@@ -243,15 +243,15 @@
                             "File ended unexpectedly."
                         );
 
-                    $otfc_tables[$f][0][$t] = unpack(
+                    $otfc_tables[$f]["tables"][$t] = unpack(
                         "A4tag/N1checksum/N1offset/N1length",
                         $otfc,
                         $t_offset
                     );
 
                     $need_length = (
-                        $otfc_tables[$f][0][$t]["offset"] +
-                        $otfc_tables[$f][0][$t]["length"]
+                        $otfc_tables[$f]["tables"][$t]["offset"] +
+                        $otfc_tables[$f]["tables"][$t]["length"]
                     );
 
                     if ($need_length > $otfc_length)
@@ -259,17 +259,17 @@
                             "File ended unexpectedly."
                         );
 
-                    $otfc_tables[$f][0][$t]["tableData"] = substr(
+                    $otfc_tables[$f]["tables"][$t]["tableData"] = substr(
                         $otfc,
-                        $otfc_tables[$f][0][$t]["offset"],
-                        $otfc_tables[$f][0][$t]["length"]
+                        $otfc_tables[$f]["tables"][$t]["offset"],
+                        $otfc_tables[$f]["tables"][$t]["length"]
                     );
 
                     if ($verify_checksums) {
-                        if ($otfc_tables[$f][0][$t]["tag"] != "head")
+                        if ($otfc_tables[$f]["tables"][$t]["tag"] != "head")
                             $this->verify_checksum(
-                                $otfc_tables[$f][0][$t]["checksum"],
-                                $otfc_tables[$f][0][$t]["tableData"]
+                                $otfc_tables[$f]["tables"][$t]["checksum"],
+                                $otfc_tables[$f]["tables"][$t]["tableData"]
                             );
                     }
 
@@ -532,30 +532,31 @@
             $woff_tables_orig = "";
             $fonts_count = count($this->otfc_tables);
             $table_total = 0;
+            $font_headers = array();
             $font_indices = array();
             $tables_index = array();
 
             for ($f = 0; $f < $fonts_count; $f++)
-                $table_total+= count($this->otfc_tables[$f][0]);
+                $table_total+= count($this->otfc_tables[$f]["tables"]);
 
-            $otfc_offset = (
-                self::TTCF_HEADER_SIZE +
+            $otfc_offset = $otfc_ver_major < 2 ?
+                self::TTCF1_HEADER_SIZE :
+                self::TTCF2_HEADER_SIZE ;
+
+            $otfc_offset+= (
                 ($fonts_count * self::OFFSET32_SIZE) +
                 ($fonts_count * self::SFNT_HEADER_SIZE) +
                 ($table_total * self::SFNT_ENTRY_SIZE)
             );
 
-            if ($otfc_ver_major > 1)
-                $otfc_offset+= self::TTCF_HEADER_EXTRA;
-
             for ($f = 0; $f < $fonts_count; $f++) {
-                $font_indices[$f] = array(
+                $font_headers[$f] = array(
                     "flavor" => $this->otfc_tables[$f]["flavor"],
                     "numTables" => $this->otfc_tables[$f]["numTables"]
                 );
 
                 $otfc_tables = $this->sort_tables_by_glyf(
-                    $this->otfc_tables[$f][0]
+                    $this->otfc_tables[$f]["tables"]
                 );
 
                 $table_count = count($otfc_tables);
@@ -588,7 +589,7 @@
                     if ($otfc_tables[$t]["tag"] == "loca")
                         $loca_index = $tables_index[$offset_key];
 
-                    $font_indices[$f][0][] = $tables_index[$offset_key];
+                    $font_indices[$f][] = $tables_index[$offset_key];
                 }
 
                 if ($glyf_index + 1 != $loca_index)
@@ -605,6 +606,7 @@
                 $otfc_ver_major,
                 $otfc_ver_minor,
                 $fonts_count,
+                $font_headers,
                 $font_indices
             );
 
@@ -1069,7 +1071,7 @@
             $data = "";
 
             foreach ($tables as $table) {
-                $flags = self::WOFF2_KNOWN_TABLES[$table["tag"]] ?? 63 ;
+                $flags = self::WOFF2_KNOWN_TAGS[ $table["tag"]] ?? 63 ;
 
                 switch ($flags) {
                     case 63:
@@ -1095,6 +1097,7 @@
             $version_major,
             $version_minor,
             $fonts_count,
+            $font_headers,
             $font_indices
         ): string {
             $data = pack(
@@ -1105,11 +1108,14 @@
 
             $data.= $this->u16_var_encode($fonts_count);
 
-            foreach ($font_indices as $font) {
-                $data.= $this->u16_var_encode($font["numTables"]);
-                $data.= pack("N1", $font["flavor"]);
+            for ($f = 0; $f < $fonts_count; $f++) {
+                $data.= $this->u16_var_encode(
+                    $font_headers[$f]["numTables"]
+                );
 
-                foreach ($font[0] as $index)
+                $data.= pack("N1", $font_headers[$f]["flavor"]);
+
+                foreach ($font_indices[$f] as $index)
                     $data.= $this->u16_var_encode($index);
             }
 
