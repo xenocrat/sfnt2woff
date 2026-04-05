@@ -192,7 +192,7 @@
 
             if (self::TTCF1_HEADER_SIZE > $otfc_length)
                 throw new \RangeException(
-                    "File does not contain otfc data."
+                    "File does not contain TTC/OTC data."
                 );
 
             $otfc_header = unpack(
@@ -521,7 +521,7 @@
         ): string {
             if (empty($this->otfc_tables))
                 throw new \LengthException(
-                    "No otfc data to export."
+                    "No TTC/OTC data to export."
                 );
 
             $otfc_ver_major = $this->otfc_header["versionMajor"];
@@ -660,7 +660,7 @@
             $woff_export = $this->create_woff2_header(
                 $woff_flavor,
                 $woff_offset,
-                $table_count,
+                count($woff_tables),
                 $otfc_offset,
                 $woff_tables_comp_length,
                 $woff_meta_offset,
