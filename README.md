@@ -1,6 +1,6 @@
 ## What is this?
 
-sfnt2woff is a PHP class for converting OTF/TTF files to WOFF 1.0 and 2.0.
+sfnt2woff is a PHP class for converting OTF, TTF, and TTC files to WOFF 1.0 and 2.0.
 
 ## Requirements
 
