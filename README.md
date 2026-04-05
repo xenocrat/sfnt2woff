@@ -146,7 +146,7 @@ Exports TTC or OTC data in WOFF 2.0 font collection format.
 
 #### Return Values
 
-Returns a complete WOFF 2.0 file as a string of data.
+Returns a complete WOFF 2.0 collection file as a string of data.
 
 ### `set_woff_version`
 
