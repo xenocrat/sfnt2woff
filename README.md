@@ -82,6 +82,24 @@ Imports TTC or OTC data from a TrueType or OpenType font collection.
 
   Whether or not to verify the table data checksums on import.
 
+### `otfc_extract`
+
+#### Description
+
+``` php
+public sfnt2woff::otfc_extract(
+    int $index
+): void
+```
+
+Extracts a font from a collection, ready for export using `woff1_export` or `woff2_export`.
+
+#### Parameters
+
+* _index_
+
+  The zero-based font index within the collection previously imported using `otfc_import`.
+
 ### `woff1_export`
 
 #### Description
@@ -251,3 +269,18 @@ Get the WOFF private data block.
 #### Return Values
 
 Returns a string of data representing the private data block, or `false` if no private data block has been set.
+
+### `get_otfc_count`
+
+#### Description
+
+``` php
+public sfnt2woff::get_otfc_count(
+): int|false
+```
+
+Counts fonts in the collection previously imported using `otfc_import`.
+
+#### Return Values
+
+Returns an integer, or `false` if no TTC or OTC data has been imported.
