@@ -92,13 +92,13 @@ public sfnt2woff::otfc_extract(
 ): void
 ```
 
-Extracts a font from a collection, ready for export using `woff1_export` or `woff2_export`.
+Extracts a font from a collection for export using `woff1_export` or `woff2_export`.
 
 #### Parameters
 
 * _index_
 
-  The zero-based font index within the collection previously imported using `otfc_import`.
+  The zero-based index of the font in a collection imported using `otfc_import`.
 
 ### `woff1_export`
 
@@ -279,7 +279,7 @@ public sfnt2woff::get_otfc_count(
 ): int|false
 ```
 
-Counts fonts in the collection previously imported using `otfc_import`.
+Gets the count of fonts in a collection imported using `otfc_import`.
 
 #### Return Values
 
