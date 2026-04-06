@@ -283,6 +283,30 @@
             $this->otfc_tables = $otfc_tables;
         }
 
+        public function otfc_extract(
+            $index
+        ): void {
+            if (!is_int($index))
+                throw new \InvalidArgumentException(
+                    "Font index must be an integer."
+                );
+
+            if (!isset($this->otfc_tables[$index]))
+                throw new \LengthException(
+                    "Invalid font index."
+                );
+
+            $sfnt_header = array(
+                "flavor" => $this->otfc_tables[$index]["flavor"],
+                "numTables" => $this->otfc_tables[$index]["numTables"]
+            );
+
+            $sfnt_tables = $this->otfc_tables[$index]["tables"];
+
+            $this->sfnt_header = $sfnt_header;
+            $this->sfnt_tables = $sfnt_tables;
+        }
+
         public function woff1_export(
             $compression_level = -1
         ): string {
@@ -772,6 +796,13 @@
                 );
 
             $this->woff_priv["data"] = $string;
+        }
+
+        public function get_otfc_count(
+        ): int|false {
+            return empty($this->otfc_tables) ?
+                false :
+                count($this->otfc_tables) ;
         }
 
         private function gz_compress(
