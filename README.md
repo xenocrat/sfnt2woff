@@ -1,6 +1,6 @@
 ## What is this?
 
-sfnt2woff is a PHP class for converting OTF, TTF, and TTC files to WOFF 1.0 and 2.0.
+sfnt2woff is a PHP class for converting OTF, TTF, TTC and OTC files to WOFF 1.0 and 2.0.
 
 ## Requirements
 
@@ -107,7 +107,7 @@ Extracts a font from a collection for export using `woff1_export` or `woff2_expo
 ``` php
 public sfnt2woff::woff1_export(
     int $compression_level = -1
-): string
+): string|false
 ```
 
 Exports SFNT data in WOFF 1.0 format.
@@ -120,7 +120,7 @@ Exports SFNT data in WOFF 1.0 format.
 
 #### Return Values
 
-Returns a complete WOFF 1.0 file as a string of data.
+Returns a complete WOFF 1.0 file as a string of data, or `false` if there is no data to export.
 
 ### `woff2_export`
 
@@ -129,7 +129,7 @@ Returns a complete WOFF 1.0 file as a string of data.
 ``` php
 public sfnt2woff::woff2_export(
     int $compression_level = -1
-): string
+): string|false
 ```
 
 Exports SFNT data in WOFF 2.0 format.
@@ -142,7 +142,7 @@ Exports SFNT data in WOFF 2.0 format.
 
 #### Return Values
 
-Returns a complete WOFF 2.0 file as a string of data.
+Returns a complete WOFF 2.0 file as a string of data, or `false` if there is no data to export.
 
 ### `woffc_export`
 
@@ -151,7 +151,7 @@ Returns a complete WOFF 2.0 file as a string of data.
 ``` php
 public sfnt2woff::woffc_export(
     int $compression_level = -1
-): string
+): string|false
 ```
 
 Exports TTC or OTC data in WOFF 2.0 font collection format.
@@ -164,7 +164,7 @@ Exports TTC or OTC data in WOFF 2.0 font collection format.
 
 #### Return Values
 
-Returns a complete WOFF 2.0 collection file as a string of data.
+Returns a complete WOFF 2.0 collection file as a string of data, or `false` if there is no data to export.
 
 ### `set_woff_version`
 
@@ -270,17 +270,32 @@ Get the WOFF private data block.
 
 Returns a string of data representing the private data block, or `false` if no private data block has been set.
 
-### `get_otfc_count`
+### `get_sfnt_info`
 
 #### Description
 
 ``` php
-public sfnt2woff::get_otfc_count(
-): int|false
+public sfnt2woff::get_sfnt_info(
+): array|false
 ```
 
-Gets the count of fonts in a collection imported using `otfc_import`.
+Returns information about SFNT data imported using `sfnt_import`.
 
 #### Return Values
 
-Returns an integer, or `false` if no TTC or OTC data has been imported.
+Returns an associative array, or `false` if no data has been imported.
+
+### `get_otfc_info`
+
+#### Description
+
+``` php
+public sfnt2woff::get_otfc_info(
+): array|false
+```
+
+Returns information about TTC or OTC data imported using `otfc_import`.
+
+#### Return Values
+
+Returns an associative array, or `false` if no data has been imported.
