@@ -115,7 +115,7 @@
 
             if (self::SFNT_HEADER_SIZE > $sfnt_length)
                 throw new \RangeException(
-                    "File does not contain SFNT data."
+                    "File is too small to contain font data."
                 );
 
             $sfnt_header = unpack(
@@ -128,7 +128,7 @@
 
             if ($sfnt_flavor === self::SFNT_FLAVOR_TTCF)
                 throw new \UnexpectedValueException(
-                    "Use sfnt2woff::otfc_import for TTC/OTC data."
+                    "Unexpected identifier: use sfnt2woff::otfc_import."
                 );
 
             $offset = self::SFNT_HEADER_SIZE;
@@ -192,7 +192,7 @@
 
             if (self::TTCF1_HEADER_SIZE > $otfc_length)
                 throw new \RangeException(
-                    "File does not contain TTC/OTC data."
+                    "File is too small to contain font data."
                 );
 
             $otfc_header = unpack(
@@ -205,7 +205,7 @@
 
             if ($sfnt_flavor !== self::SFNT_FLAVOR_TTCF)
                 throw new \UnexpectedValueException(
-                    "Use sfnt2woff::sfnt_import for SFNT data."
+                    "Unexpected identifier: try sfnt2woff::sfnt_import."
                 );
 
             $f_offset = self::TTCF1_HEADER_SIZE;
@@ -309,11 +309,9 @@
 
         public function woff1_export(
             $compression_level = -1
-        ): string {
+        ): string|false {
             if (empty($this->sfnt_tables))
-                throw new \LengthException(
-                    "No SFNT data to export."
-                );
+                return false;
 
             $sfnt_tables = $this->sort_tables_by_offset(
                 $this->sfnt_tables
@@ -425,11 +423,9 @@
 
         public function woff2_export(
             $compression_level = -1
-        ): string {
+        ): string|false {
             if (empty($this->sfnt_tables))
-                throw new \LengthException(
-                    "No SFNT data to export."
-                );
+                return false;
 
             $sfnt_tables = $this->sort_tables_by_glyf(
                 $this->sfnt_tables
@@ -542,11 +538,9 @@
 
         public function woffc_export(
             $compression_level = -1
-        ): string {
+        ): string|false {
             if (empty($this->otfc_tables))
-                throw new \LengthException(
-                    "No TTC/OTC data to export."
-                );
+                return false;
 
             $otfc_ver_major = $this->otfc_header["versionMajor"];
             $otfc_ver_minor = $this->otfc_header["versionMinor"];
@@ -798,11 +792,20 @@
             $this->woff_priv["data"] = $string;
         }
 
-        public function get_otfc_count(
-        ): int|false {
-            return empty($this->otfc_tables) ?
-                false :
-                count($this->otfc_tables) ;
+        public function get_sfnt_info(
+        ): array|false {
+            if (empty($this->sfnt_header))
+                return false;
+
+            return $this->sfnt_header;
+        }
+
+        public function get_otfc_info(
+        ): array|false {
+            if (empty($this->otfc_header))
+                return false;
+
+            return $this->otfc_header;
         }
 
         private function gz_compress(
