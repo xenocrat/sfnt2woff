@@ -98,7 +98,7 @@ Extracts SFNT data from a TrueType or OpenType font collection. After extraction
 
 * _index_
 
-  The zero-based index of the font in a collection imported using `otfc_import`. The count of fonts in the collection is returned by `get_otfc_info`.
+  The zero-based index of the font in a collection imported using `otfc_import`. The total number of fonts in the collection is returned by `get_otfc_info`.
 
 ### `woff1_export`
 
