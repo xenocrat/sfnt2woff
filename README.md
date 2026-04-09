@@ -92,13 +92,13 @@ public sfnt2woff::otfc_extract(
 ): void
 ```
 
-Extracts a font from a collection for export using `woff1_export` or `woff2_export`.
+Extracts SFNT data from a TrueType or OpenType font collection. After extraction, the data can be exported using `woff1_export` or `woff2_export`.
 
 #### Parameters
 
 * _index_
 
-  The zero-based index of the font in a collection imported using `otfc_import`.
+  The zero-based index of the font in a collection imported using `otfc_import`. The count of tables in the collection is returned by `get_otfc_info`.
 
 ### `woff1_export`
 
@@ -279,7 +279,7 @@ public sfnt2woff::get_sfnt_info(
 ): array|false
 ```
 
-Returns information about SFNT data imported using `sfnt_import`.
+Returns information about SFNT data imported using `sfnt_import` or `otfc_extract`.
 
 #### Return Values
 
