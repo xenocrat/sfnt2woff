@@ -116,7 +116,7 @@ Exports SFNT data in WOFF 1.0 format.
 
 * _compression\_level_
 
-  The compression level, from 0 (minimum) to 9 (maximum).
+  The compression level, from 0 (minimum) to 9 (maximum). Defaults to 6.
 
 #### Return Values
 
@@ -138,7 +138,7 @@ Exports SFNT data in WOFF 2.0 format.
 
 * _compression\_level_
 
-  The compression level, from 0 (minimum) to 11 (maximum).
+  The compression level, from 0 (minimum) to 11 (maximum). Defaults to `BROTLI_COMPRESS_LEVEL_DEFAULT`.
 
 #### Return Values
 
@@ -160,7 +160,7 @@ Exports TTC or OTC data in WOFF 2.0 font collection format.
 
 * _compression\_level_
 
-  The compression level, from 0 (minimum) to 11 (maximum).
+  The compression level, from 0 (minimum) to 11 (maximum). Defaults to `BROTLI_COMPRESS_LEVEL_DEFAULT`.
 
 #### Return Values
 
